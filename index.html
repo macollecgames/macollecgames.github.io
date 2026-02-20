@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>MaCollecGames</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #111118;
+    --bg3: #18181f;
+    --bg4: #1e1e28;
+    --accent: #7c5cfc;
+    --accent2: #a78bfa;
+    --accent3: #e879f9;
+    --text: #e8e8f0;
+    --text2: #9898b0;
+    --text3: #555568;
+    --border: rgba(124,92,252,0.15);
+    --border2: rgba(124,92,252,0.3);
+    --glow: 0 0 20px rgba(124,92,252,0.3);
+    --green: #22c55e;
+    --orange: #f59e0b;
+    --red: #ef4444;
+    --gray: #6b7280;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; min-height:100vh; overflow-x:hidden; }
+
+  /* NAV */
+  .nav { position:sticky; top:0; z-index:100; background:rgba(10,10,15,0.9); backdrop-filter:blur(20px); border-bottom:1px solid var(--border); padding:0 16px; height:56px; display:flex; align-items:center; justify-content:space-between; }
+  .nav-logo { font-family:'Rajdhani',sans-serif; font-size:22px; font-weight:700; letter-spacing:2px; background:linear-gradient(135deg,var(--accent2),var(--accent3)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .nav-right { display:flex; gap:8px; }
+  .nav-btn { width:38px; height:38px; border-radius:10px; border:1px solid var(--border); background:var(--bg3); color:var(--text2); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:16px; transition:all 0.2s; }
+  .nav-btn:active { transform:scale(0.92); }
+  .nav-btn.add-btn { background:linear-gradient(135deg,var(--accent),var(--accent3)); color:white; border:none; box-shadow:var(--glow); }
+  .nav-btn.voice-btn { background:linear-gradient(135deg,var(--accent),var(--accent3)); color:white; border:none; box-shadow:var(--glow); }
+  .nav-btn.voice-btn.listening { animation:vbpulse 0.8s infinite; }
+  @keyframes vbpulse { 0%,100%{box-shadow:0 0 20px rgba(124,92,252,0.3)} 50%{box-shadow:0 0 40px rgba(232,121,249,0.8)} }
+
+  /* VOICE ASSISTANT */
+  .voice-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.92); backdrop-filter:blur(20px); z-index:400; display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.3s; }
+  .voice-overlay.open { opacity:1; pointer-events:all; }
+  .voice-orb-wrap { position:relative; width:140px; height:140px; display:flex; align-items:center; justify-content:center; margin-bottom:24px; }
+  .voice-ring { position:absolute; border-radius:50%; border:1px solid; animation:vring 2s ease-in-out infinite; }
+  .voice-ring:nth-child(1) { width:140px; height:140px; border-color:rgba(124,92,252,0.2); }
+  .voice-ring:nth-child(2) { width:105px; height:105px; border-color:rgba(124,92,252,0.3); animation-delay:0.3s; }
+  .voice-ring:nth-child(3) { width:70px; height:70px; border-color:rgba(232,121,249,0.4); animation-delay:0.6s; }
+  @keyframes vring { 0%,100%{transform:scale(1);opacity:0.5} 50%{transform:scale(1.08);opacity:1} }
+  .voice-orb { width:54px; height:54px; border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--accent3)); display:flex; align-items:center; justify-content:center; font-size:22px; box-shadow:var(--glow); z-index:1; transition:transform 0.2s; cursor:pointer; animation:orbBounce 1.5s ease-in-out infinite; }
+  @keyframes orbBounce { 0%,100%{transform:scale(1)} 50%{transform:scale(1.12)} }
+  .voice-orb.listening { animation:none; transform:scale(1.15); box-shadow:0 0 40px rgba(232,121,249,0.7); }
+  .voice-orb.listening { transform:scale(1.15); box-shadow:0 0 40px rgba(232,121,249,0.7); }
+  .voice-question { font-family:'Rajdhani',sans-serif; font-size:22px; font-weight:600; color:var(--text); text-align:center; padding:0 30px; margin-bottom:16px; min-height:60px; line-height:1.3; }
+  .voice-answer { font-size:15px; color:var(--accent2); text-align:center; padding:12px 24px; background:var(--bg3); border-radius:14px; border:1px solid var(--border); min-width:260px; min-height:48px; margin-bottom:24px; font-style:italic; }
+  .voice-progress { display:flex; gap:8px; margin-bottom:30px; }
+  .voice-step { width:28px; height:4px; border-radius:2px; background:var(--bg4); transition:background 0.3s; }
+  .voice-step.done { background:var(--accent); }
+  .voice-step.active { background:var(--accent3); }
+  .voice-hint-text { font-size:11px; color:var(--text3); text-align:center; padding:0 40px; line-height:1.6; margin-bottom:20px; }
+  .voice-actions { display:flex; gap:10px; }
+  .voice-skip { padding:10px 20px; border-radius:10px; background:var(--bg3); border:1px solid var(--border); color:var(--text2); font-size:13px; cursor:pointer; font-family:'Inter',sans-serif; }
+  .voice-cancel-btn { padding:10px 20px; border-radius:10px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#ef4444; font-size:13px; cursor:pointer; font-family:'Inter',sans-serif; }
+  .voice-recap { background:var(--bg3); border:1px solid var(--border); border-radius:14px; padding:16px; min-width:280px; margin-bottom:20px; }
+  .voice-recap-title { font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:600; color:var(--accent2); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; }
+  .voice-recap-item { display:flex; justify-content:space-between; font-size:13px; padding:4px 0; border-bottom:1px solid var(--border); }
+  .voice-recap-item:last-child { border-bottom:none; }
+  .voice-recap-label { color:var(--text3); }
+  .voice-recap-val { color:var(--text); font-weight:500; }
+  .voice-confirm { padding:13px 32px; border-radius:12px; background:linear-gradient(135deg,var(--accent),var(--accent3)); color:white; font-size:15px; font-weight:700; cursor:pointer; border:none; font-family:'Rajdhani',sans-serif; letter-spacing:1px; box-shadow:var(--glow); }
+
+  /* STATS */
+  .stats-bar { display:flex; overflow-x:auto; scrollbar-width:none; border-bottom:1px solid var(--border); background:var(--bg2); }
+  .stats-bar::-webkit-scrollbar{display:none}
+  .stat { flex:0 0 auto; text-align:center; padding:10px 20px; border-right:1px solid var(--border); }
+  .stat:last-child{border-right:none}
+  .stat-val { font-family:'Rajdhani',sans-serif; font-size:22px; font-weight:700; background:linear-gradient(135deg,var(--accent2),var(--accent3)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .stat-label { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:1px; margin-top:2px; }
+
+  /* SEARCH + FILTERS */
+  .search-wrap { padding:12px 16px; background:var(--bg2); position:relative; }
+  .search-icon { position:absolute; left:28px; top:50%; transform:translateY(-50%); color:var(--text3); pointer-events:none; }
+  .search-input { width:100%; background:var(--bg3); border:1px solid var(--border); border-radius:12px; padding:10px 16px 10px 40px; color:var(--text); font-size:14px; outline:none; font-family:'Inter',sans-serif; }
+  .search-input:focus{border-color:var(--accent)}
+  .search-input::placeholder{color:var(--text3)}
+
+  .filters { display:flex; gap:8px; padding:10px 16px; overflow-x:auto; scrollbar-width:none; background:var(--bg2); border-bottom:1px solid var(--border); }
+  .filters::-webkit-scrollbar{display:none}
+  .filter-chip { flex:0 0 auto; padding:6px 14px; border-radius:20px; border:1px solid var(--border); background:var(--bg3); color:var(--text2); font-size:12px; font-weight:500; cursor:pointer; transition:all 0.2s; white-space:nowrap; }
+  .filter-chip.active { background:var(--accent); border-color:var(--accent); color:white; box-shadow:var(--glow); }
+
+  /* SECTION */
+  .section-header { display:flex; align-items:center; justify-content:space-between; padding:16px 16px 8px; }
+  .section-title { font-family:'Rajdhani',sans-serif; font-size:16px; font-weight:600; color:var(--text2); text-transform:uppercase; letter-spacing:2px; }
+  .section-count { font-size:12px; color:var(--text3); }
+
+  /* GRID */
+  .games-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding:0 16px 100px; }
+  .game-card { position:relative; border-radius:10px; overflow:hidden; background:var(--bg3); border:1px solid var(--border); cursor:pointer; transition:transform 0.2s; animation:fadeIn 0.3s ease backwards; }
+  .game-card:active{transform:scale(0.95)}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .game-cover-ph { width:100%; aspect-ratio:3/4; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,var(--bg4),var(--bg3)); font-size:30px; }
+  .game-badge { position:absolute; top:6px; right:6px; padding:2px 6px; border-radius:4px; font-size:9px; font-weight:700; text-transform:uppercase; }
+  .badge-Complet{background:#22c55e;color:white}
+  .badge-Loose{background:#f59e0b;color:black}
+  .badge-Blister{background:var(--accent3);color:white}
+  .game-info{padding:8px}
+  .game-title{font-size:11px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .game-platform{font-size:9px;color:var(--accent2);margin-top:2px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px}
+  .game-footer{display:flex;align-items:center;justify-content:space-between;padding:0 8px 7px;gap:4px}
+  .game-etat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .game-region{font-size:8px;font-weight:700;color:var(--text3);letter-spacing:0.5px;text-transform:uppercase}
+  .game-objectif{font-size:8px;font-weight:700;padding:1px 5px;border-radius:3px;white-space:nowrap}
+  .etat-tag{font-size:8px;font-weight:700;padding:1px 5px;border-radius:3px;border:1px solid;background:rgba(255,255,255,0.04);white-space:nowrap}
+
+  /* EMPTY STATE */
+  .empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px 20px; color:var(--text3); text-align:center; }
+  .empty-icon { font-size:64px; margin-bottom:16px; opacity:0.5; }
+  .empty-title { font-family:'Rajdhani',sans-serif; font-size:20px; font-weight:600; margin-bottom:8px; color:var(--text2); }
+  .empty-desc { font-size:13px; line-height:1.6; }
+  .empty-btn { margin-top:24px; padding:12px 28px; border-radius:12px; background:linear-gradient(135deg,var(--accent),var(--accent3)); color:white; font-size:14px; font-weight:600; cursor:pointer; border:none; font-family:'Inter',sans-serif; box-shadow:var(--glow); }
+
+  /* BOTTOM NAV */
+  .bottom-nav { position:fixed; bottom:0; left:0; right:0; height:70px; background:rgba(10,10,15,0.95); backdrop-filter:blur(20px); border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-around; padding-bottom:env(safe-area-inset-bottom); z-index:100; }
+  .bottom-btn { display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; padding:8px 16px; border-radius:12px; transition:all 0.2s; color:var(--text3); }
+  .bottom-btn.active{color:var(--accent2)}
+  .bottom-btn:active{transform:scale(0.9)}
+  .bottom-btn .icon{font-size:20px}
+  .bottom-btn .label{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.5px}
+  .scan-fab { width:52px; height:52px; border-radius:16px; background:linear-gradient(135deg,var(--accent),var(--accent3)); display:flex; align-items:center; justify-content:center; font-size:22px; box-shadow:var(--glow); cursor:pointer; margin-top:-10px; transition:transform 0.2s; }
+  .scan-fab:active{transform:scale(0.9)}
+
+  /* ===== FORMULAIRE ===== */
+  .form-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(10px); z-index:200; display:flex; flex-direction:column; justify-content:flex-end; opacity:0; pointer-events:none; transition:opacity 0.3s; }
+  .form-overlay.open{opacity:1;pointer-events:all}
+  .form-sheet { background:var(--bg2); border-radius:24px 24px 0 0; border-top:1px solid var(--border2); max-height:92vh; overflow-y:auto; transform:translateY(100%); transition:transform 0.4s cubic-bezier(0.34,1.3,0.64,1); }
+  .form-overlay.open .form-sheet{transform:translateY(0)}
+
+  .form-handle { width:36px; height:4px; border-radius:2px; background:var(--bg4); margin:12px auto 0; }
+  .form-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border); }
+  .form-title { font-family:'Rajdhani',sans-serif; font-size:20px; font-weight:700; background:linear-gradient(135deg,var(--accent2),var(--accent3)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .form-close { width:32px; height:32px; border-radius:8px; border:1px solid var(--border); background:var(--bg3); color:var(--text2); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; }
+
+  .form-body { padding:16px 20px 30px; }
+
+  .form-group { margin-bottom:16px; }
+  .form-label { font-size:11px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; display:block; }
+  .form-input { width:100%; background:var(--bg3); border:1px solid var(--border); border-radius:10px; padding:11px 14px; color:var(--text); font-size:14px; outline:none; font-family:'Inter',sans-serif; transition:border-color 0.2s; -webkit-appearance:none; }
+  .form-input:focus{border-color:var(--accent)}
+  .form-input::placeholder{color:var(--text3)}
+  .form-select { width:100%; background:var(--bg3); border:1px solid var(--border); border-radius:10px; padding:11px 14px; color:var(--text); font-size:14px; outline:none; font-family:'Inter',sans-serif; -webkit-appearance:none; appearance:none; cursor:pointer; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23555568' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; }
+  .form-select:focus{border-color:var(--accent)}
+  .form-select option{background:var(--bg3);color:var(--text)}
+
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+  /* CHIPS SELECTOR */
+  .chips-select { display:flex; flex-wrap:wrap; gap:8px; }
+  .chip-option { padding:8px 14px; border-radius:10px; border:1px solid var(--border); background:var(--bg3); color:var(--text2); font-size:12px; font-weight:500; cursor:pointer; transition:all 0.2s; }
+  .chip-option.selected { border-color:var(--accent); color:var(--accent2); background:rgba(124,92,252,0.1); }
+  .chip-option:active{transform:scale(0.95)}
+
+  /* ETAT SELECTOR */
+  .etat-selector { display:flex; gap:6px; flex-wrap:wrap; }
+  .etat-opt { padding:7px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg3); color:var(--text2); font-size:12px; font-weight:500; cursor:pointer; transition:all 0.2s; }
+  .etat-opt:active{transform:scale(0.95)}
+  .etat-opt.sel-Neuf{border-color:var(--green);color:var(--green);background:rgba(34,197,94,0.1)}
+  .etat-opt.sel-Très\ bon{border-color:#84cc16;color:#84cc16;background:rgba(132,204,22,0.1)}
+  .etat-opt.sel-Bon{border-color:var(--orange);color:var(--orange);background:rgba(245,158,11,0.1)}
+  .etat-opt.sel-Mauvais{border-color:var(--red);color:var(--red);background:rgba(239,68,68,0.1)}
+  .etat-opt.sel-Hors\ service{border-color:var(--gray);color:var(--gray);background:rgba(107,114,128,0.1)}
+
+  .form-section-title { font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:600; color:var(--accent2); text-transform:uppercase; letter-spacing:1px; margin:20px 0 12px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+
+  .form-submit { width:100%; padding:15px; border-radius:14px; background:linear-gradient(135deg,var(--accent),var(--accent3)); color:white; font-size:16px; font-weight:700; cursor:pointer; border:none; font-family:'Rajdhani',sans-serif; letter-spacing:1px; box-shadow:var(--glow); margin-top:24px; transition:transform 0.2s; }
+  .form-submit:active{transform:scale(0.98)}
+
+  /* DETAIL MODAL */
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.8); backdrop-filter:blur(10px); z-index:200; display:flex; flex-direction:column; justify-content:flex-end; opacity:0; pointer-events:none; transition:opacity 0.3s; }
+  .modal-overlay.open{opacity:1;pointer-events:all}
+  .modal { background:var(--bg2); border-radius:24px 24px 0 0; border-top:1px solid var(--border); max-height:88vh; overflow-y:auto; transform:translateY(100%); transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+  .modal-overlay.open .modal{transform:translateY(0)}
+  .modal-handle{width:36px;height:4px;border-radius:2px;background:var(--bg4);margin:12px auto 0}
+  .modal-hero{display:flex;gap:16px;padding:20px 20px 0;align-items:flex-start}
+  .modal-cover-ph{width:100px;aspect-ratio:3/4;border-radius:10px;background:linear-gradient(135deg,var(--bg4),var(--bg3));display:flex;align-items:center;justify-content:center;font-size:40px;flex-shrink:0}
+  .modal-meta{flex:1}
+  .modal-title{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;line-height:1.2;margin-bottom:6px}
+  .modal-platform{display:inline-block;padding:3px 10px;border-radius:6px;background:rgba(124,92,252,0.2);color:var(--accent2);font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px}
+  .price-row{display:flex;gap:10px}
+  .price-box{flex:1;background:var(--bg3);border-radius:10px;padding:10px;text-align:center;border:1px solid var(--border)}
+  .price-val{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--accent2)}
+  .price-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px}
+  .modal-section{padding:16px 20px 0}
+  .modal-section-title{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .modal-section-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+  .etat-grid{display:flex;gap:8px;margin-bottom:10px}
+  .etat-item{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 6px;text-align:center;transition:border-color 0.3s}
+  .etat-icon{font-size:16px;margin-bottom:4px}
+  .etat-name{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px}
+  .etat-val{font-size:11px;font-weight:600;margin-top:3px}
+  .contenu-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;border:1px solid;margin-bottom:14px}
+  .details-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .detail-item{background:var(--bg3);border-radius:10px;padding:10px 12px;border:1px solid var(--border)}
+  .detail-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px}
+  .detail-val{font-size:14px;color:var(--text);font-weight:500;margin-top:3px}
+  .modal-desc{font-size:13px;color:var(--text2);line-height:1.7}
+  .modal-actions{display:flex;gap:10px;padding:16px 20px}
+  .btn-edit{flex:1;padding:13px;border-radius:12px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
+  .btn-delete{padding:13px 20px;border-radius:12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#ef4444;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
+  .btn-edit:active,.btn-delete:active{transform:scale(0.97)}
+
+  /* TOAST */
+  .toast{position:fixed;bottom:85px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg3);border:1px solid var(--border2);border-radius:12px;padding:10px 20px;font-size:13px;color:var(--text);white-space:nowrap;opacity:0;transition:all 0.3s;z-index:500;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">MACOLLECGAMES</div>
+  <div class="nav-right">
+    <button class="nav-btn voice-btn" id="voiceNavBtn" onclick="openVoiceAssistant()">🎙️</button>
+    <button class="nav-btn add-btn" onclick="openForm()">＋</button>
+  </div>
+</nav>
+
+<div class="stats-bar" id="statsBar">
+  <div class="stat"><div class="stat-val" id="statTotal">0</div><div class="stat-label">Jeux</div></div>
+  <div class="stat"><div class="stat-val" id="statPlat">0</div><div class="stat-label">Plateformes</div></div>
+  <div class="stat"><div class="stat-val" id="statValeur">0€</div><div class="stat-label">Valeur</div></div>
+  <div class="stat"><div class="stat-val" id="statNeuf">0</div><div class="stat-label">Neufs</div></div>
+</div>
+
+<div class="search-wrap">
+  <span class="search-icon">🔍</span>
+  <input class="search-input" type="text" placeholder="Rechercher un jeu..." oninput="filterGames(this.value)">
+</div>
+
+<div class="filters" id="filtersBar">
+  <div class="filter-chip active" onclick="setFilter(this,'Tous')">Tous</div>
+</div>
+
+<div class="section-header">
+  <div class="section-title">Ma Collection</div>
+  <div class="section-count" id="gameCount">0 jeu</div>
+</div>
+
+<div class="games-grid" id="gamesGrid"></div>
+
+<div class="bottom-nav">
+  <div class="bottom-btn active"><div class="icon">🎮</div><div class="label">Collection</div></div>
+  <div class="bottom-btn" onclick="showToast('📊 Bientôt')"><div class="icon">📊</div><div class="label">Stats</div></div>
+  <div class="scan-fab" onclick="showToast('📷 Scanner bientôt')">📷</div>
+  <div class="bottom-btn" onclick="showToast('❤️ Bientôt')"><div class="icon">❤️</div><div class="label">Wishlist</div></div>
+  <div class="bottom-btn" onclick="showToast('👤 Bientôt')"><div class="icon">👤</div><div class="label">Profil</div></div>
+</div>
+
+<!-- FORMULAIRE AJOUT -->
+<div class="form-overlay" id="formOverlay" onclick="closeFormOutside(event)">
+  <div class="form-sheet">
+    <div class="form-handle"></div>
+    <div class="form-header">
+      <div class="form-title" id="formTitle">➕ Ajouter un jeu</div>
+      <div class="form-close" onclick="closeForm()">✕</div>
+    </div>
+    <div class="form-body">
+
+      <div class="form-section-title">🎮 Informations générales</div>
+
+      <div class="form-group">
+        <label class="form-label">Titre du jeu *</label>
+        <input class="form-input" id="fTitre" type="text" placeholder="Ex: Final Fantasy VII">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Plateforme *</label>
+          <select class="form-select" id="fPlateforme">
+            <option value="">Choisir...</option>
+            <optgroup label="── Atari ──">
+              <option>Atari 400</option>
+              <option>Atari 800</option>
+              <option>Atari 2600</option>
+              <option>Atari 5200</option>
+              <option>Atari 7800</option>
+              <option>Atari ST</option>
+              <option>Atari Lynx</option>
+              <option>Atari Jaguar</option>
+            </optgroup>
+            <optgroup label="── Nintendo ──">
+              <option>NES</option><option>Famicom</option>
+              <option>SNES</option><option>Super Famicom</option>
+              <option>N64</option>
+              <option>GameCube</option><option>Wii</option><option>Wii U</option><option>Switch</option>
+              <option>GameBoy</option><option>GameBoy Color</option><option>GameBoy Advance</option>
+              <option>DS</option><option>3DS</option>
+              <option>Virtual Boy</option>
+            </optgroup>
+            <optgroup label="── Sony ──">
+              <option>PS1</option><option>PS2</option><option>PS3</option><option>PS4</option><option>PS5</option>
+              <option>PSP</option><option>PS Vita</option>
+            </optgroup>
+            <optgroup label="── Microsoft ──">
+              <option>Xbox</option><option>Xbox 360</option><option>Xbox One</option><option>Xbox Series</option>
+            </optgroup>
+            <optgroup label="── Sega ──">
+              <option>Sega SG-1000</option>
+              <option>Sega Master System</option>
+              <option>Sega Mega Drive</option>
+              <option>Sega Mega-CD</option>
+              <option>Sega 32X</option>
+              <option>Sega Saturn</option>
+              <option>Sega Dreamcast</option>
+              <option>Sega Game Gear</option>
+              <option>Sega Pico</option>
+            </optgroup>
+            <optgroup label="── Commodore ──">
+              <option>Commodore 64</option>
+              <option>Commodore VIC-20</option>
+              <option>Commodore 16</option>
+              <option>Commodore Amiga 500</option>
+              <option>Commodore Amiga 1200</option>
+              <option>Commodore Amiga 600</option>
+            </optgroup>
+            <optgroup label="── Oric ──">
+              <option>Oric 48</option>
+              <option>Oric Atmos</option>
+              <option>Telestrat</option>
+            </optgroup>
+            <optgroup label="── Autres ──">
+              <option>PC</option>
+              <option>Amstrad CPC</option>
+              <option>Amstrad GX4000</option>
+              <option>ZX Spectrum</option>
+              <option>MSX</option>
+              <option>Neo Geo</option>
+              <option>Neo Geo Pocket</option>
+              <option>TurboGrafx-16</option>
+              <option>PC Engine</option>
+              <option>3DO</option>
+              <option>Philips CD-i</option>
+              <option>Vectrex</option>
+              <option>Intellivision</option>
+              <option>ColecoVision</option>
+              <option>Thomson MO5</option>
+              <option>Thomson TO7</option>
+              <option>BBC Micro</option>
+              <option>Autre</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Région</label>
+          <select class="form-select" id="fRegion">
+            <option>EUR</option><option>US</option><option>JAP</option><option>CAN</option><option>Autre</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Année</label>
+          <input class="form-input" id="fAnnee" type="number" placeholder="Ex: 1997" min="1970" max="2030">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Genre</label>
+          <select class="form-select" id="fGenre">
+            <option value="">Choisir...</option>
+            <option>Action</option><option>Action/RPG</option><option>Aventure</option>
+            <option>FPS</option><option>RPG</option><option>Plateforme</option>
+            <option>Sport</option><option>Course</option><option>Combat</option>
+            <option>Stratégie</option><option>Simulation</option><option>Puzzle</option>
+            <option>Survival Horror</option><option>Infiltration</option><option>Autre</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Support</label>
+          <select class="form-select" id="fSupport">
+            <option>Cartouche</option><option>Disque Optique</option><option>Cassette</option><option>Carte</option><option>Autre</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Édition</label>
+          <select class="form-select" id="fEdition">
+            <option>Standard</option><option>Day One</option><option>Collector</option>
+            <option>Steelbook</option><option>Limitée</option><option>GOTY</option><option>Autre</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-section-title">📦 État & Contenu</div>
+
+      <div class="form-group">
+        <label class="form-label">Contenu *</label>
+        <div class="chips-select" id="fContenu">
+          <div class="chip-option" onclick="selectChip('fContenu',this,'Blister')">🔵 Blister</div>
+          <div class="chip-option" onclick="selectChip('fContenu',this,'Complet')">🟢 Complet</div>
+          <div class="chip-option" onclick="selectChip('fContenu',this,'Loose')">🟡 Loose</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">🎮 État du Jeu *</label>
+        <div class="etat-selector" id="fEtatJeu">
+          <div class="etat-opt" onclick="selectEtat('fEtatJeu',this,'Neuf')">Neuf</div>
+          <div class="etat-opt" onclick="selectEtat('fEtatJeu',this,'Très bon')">Très bon</div>
+          <div class="etat-opt" onclick="selectEtat('fEtatJeu',this,'Bon')">Bon</div>
+          <div class="etat-opt" onclick="selectEtat('fEtatJeu',this,'Mauvais')">Mauvais</div>
+          <div class="etat-opt" onclick="selectEtat('fEtatJeu',this,'Hors service')">Hors service</div>
+        </div>
+      </div>
+
+      <div class="form-group" id="groupBoite">
+        <label class="form-label">📦 État de la Boîte</label>
+        <div class="etat-selector" id="fEtatBoite">
+          <div class="etat-opt" onclick="selectEtat('fEtatBoite',this,'Neuf')">Neuf</div>
+          <div class="etat-opt" onclick="selectEtat('fEtatBoite',this,'Très bon')">Très bon</div>
+          <div class="etat-opt" onclick="selectEtat('fEtatBoite',this,'Bon')">Bon</div>
+          <div class="etat-opt" onclick="selectEtat('fEtatBoite',this,'Mauvais')">Mauvais</div>
+          <div class="etat-opt" onclick="selectEtat('fEtatBoite',this,'Hors service')">Hors service</div>
+        </div>
+      </div>
+
+      <div class="form-group" id="groupManuel">
+        <label class="form-label">📖 État du Manuel</label>
+        <div class="etat-selector" id="fEtatManuel">
+          <div class="etat-opt" onclick="selectEtat('fEtatManuel',this,'Neuf')">Neuf</div>
+          <div class="etat-opt" onclick="selectEtat('fEtatManuel',this,'Très bon')">Très bon</div>
+          <div class="etat-opt" onclick="selectEtat('fEtatManuel',this,'Bon')">Bon</div>
+          <div class="etat-opt" onclick="selectEtat('fEtatManuel',this,'Mauvais')">Mauvais</div>
+          <div class="etat-opt" onclick="selectEtat('fEtatManuel',this,'Hors service')">Hors service</div>
+        </div>
+      </div>
+
+      <div class="form-section-title">💰 Prix & Objectif</div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Prix payé (€)</label>
+          <input class="form-input" id="fPrix" type="number" placeholder="Ex: 25" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cote actuelle (€)</label>
+          <input class="form-input" id="fCote" type="number" placeholder="Ex: 40" min="0">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Objectif</label>
+        <div class="chips-select" id="fObjectif">
+          <div class="chip-option" onclick="selectChip('fObjectif',this,'À garder')">💜 À garder</div>
+          <div class="chip-option" onclick="selectChip('fObjectif',this,'À vendre')">🟡 À vendre</div>
+          <div class="chip-option" onclick="selectChip('fObjectif',this,'À réparer')">🔴 À réparer</div>
+          <div class="chip-option" onclick="selectChip('fObjectif',this,'À échanger')">🔵 À échanger</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Emoji / Icône</label>
+        <input class="form-input" id="fEmoji" type="text" placeholder="Ex: 🎮 🗡️ 🔥 ⚔️" maxlength="4">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Notes personnelles</label>
+        <textarea class="form-input" id="fNotes" rows="3" placeholder="Acheté à Cash Converters, numéro de série..." style="resize:none;"></textarea>
+      </div>
+
+      <button class="form-submit" id="formSubmitBtn" onclick="saveGame()">✓ AJOUTER À LA COLLECTION</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="gameModal" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-hero">
+      <div class="modal-cover-ph" id="mCover">🎮</div>
+      <div class="modal-meta">
+        <div class="modal-title" id="mTitle">—</div>
+        <div class="modal-platform" id="mPlat">—</div>
+        <div class="price-row">
+          <div class="price-box"><div class="price-val" id="mPaid">—</div><div class="price-label">Payé</div></div>
+          <div class="price-box"><div class="price-val" id="mCote">—</div><div class="price-label">Cote</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-title">État des composants</div>
+      <div class="etat-grid">
+        <div class="etat-item" id="eJ"><div class="etat-icon">🎮</div><div class="etat-name">Jeu</div><div class="etat-val" id="eJV">—</div></div>
+        <div class="etat-item" id="eB"><div class="etat-icon">📦</div><div class="etat-name">Boîte</div><div class="etat-val" id="eBV">—</div></div>
+        <div class="etat-item" id="eM"><div class="etat-icon">📖</div><div class="etat-name">Manuel</div><div class="etat-val" id="eMV">—</div></div>
+      </div>
+      <div id="mContenu"></div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-title">Informations</div>
+      <div class="details-grid" id="mDetails"></div>
+    </div>
+    <div class="modal-section" id="mNotesSection" style="display:none">
+      <div class="modal-section-title">Notes</div>
+      <div class="modal-desc" id="mNotes">—</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-edit" onclick="editGame()">✏️ Modifier</button>
+      <button class="btn-delete" onclick="deleteGame()">🗑️ Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== DONNÉES =====
+const SC = {'Neuf':'#22c55e','Très bon':'#84cc16','Bon':'#f59e0b','Mauvais':'#ef4444','Hors service':'#6b7280'};
+const OC = {'À garder':'#a78bfa','À vendre':'#f59e0b','À réparer':'#ef4444','À échanger':'#06b6d4'};
+const CS = {
+  'Blister':{bg:'rgba(167,139,250,0.1)',c:'#a78bfa',b:'rgba(167,139,250,0.3)'},
+  'Complet':{bg:'rgba(34,197,94,0.1)',c:'#22c55e',b:'rgba(34,197,94,0.3)'},
+  'Loose':{bg:'rgba(245,158,11,0.1)',c:'#f59e0b',b:'rgba(245,158,11,0.3)'}
+};
+
+let collection = JSON.parse(localStorage.getItem('macollecgames_collection') || '[]');
+let currentFilter = 'Tous';
+let currentSearch = '';
+let currentGameId = null;
+let editMode = false;
+
+function saveToStorage() {
+  localStorage.setItem('macollecgames_collection', JSON.stringify(collection));
+}
+
+// ===== STATS =====
+function updateStats() {
+  const total = collection.length;
+  const plateformes = [...new Set(collection.map(g => g.plateforme))].filter(Boolean).length;
+  const valeur = collection.reduce((s, g) => s + (parseFloat(g.cote) || 0), 0);
+  const neufs = collection.filter(g => g.etatJeu === 'Neuf').length;
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statPlat').textContent = plateformes;
+  document.getElementById('statValeur').textContent = valeur > 0 ? Math.round(valeur) + '€' : '0€';
+  document.getElementById('statNeuf').textContent = neufs;
+}
+
+// ===== FILTRES DYNAMIQUES =====
+function updateFilters() {
+  const plats = [...new Set(collection.map(g => g.plateforme))].filter(Boolean).sort();
+  const bar = document.getElementById('filtersBar');
+  bar.innerHTML = `<div class="filter-chip ${currentFilter==='Tous'?'active':''}" onclick="setFilter(this,'Tous')">Tous</div>`;
+  plats.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'filter-chip' + (currentFilter===p?' active':'');
+    div.textContent = p;
+    div.onclick = () => setFilter(div, p);
+    bar.appendChild(div);
+  });
+}
+
+// ===== RENDU GRILLE =====
+function renderGames() {
+  let filtered = collection;
+  if (currentFilter !== 'Tous') filtered = filtered.filter(g => g.plateforme === currentFilter);
+  if (currentSearch) filtered = filtered.filter(g => (g.titre||'').toLowerCase().includes(currentSearch.toLowerCase()));
+
+  const cnt = document.getElementById('gameCount');
+  cnt.textContent = filtered.length + ' jeu' + (filtered.length !== 1 ? 'x' : '') + ' affiché' + (filtered.length !== 1 ? 's' : '');
+
+  const grid = document.getElementById('gamesGrid');
+
+  if (collection.length === 0) {
+    grid.style.display = 'none';
+    let es = document.getElementById('emptyState');
+    if (!es) {
+      es = document.createElement('div');
+      es.id = 'emptyState';
+      es.className = 'empty-state';
+      es.innerHTML = `<div class="empty-icon">🎮</div><div class="empty-title">Collection vide</div><div class="empty-desc">Commence par ajouter ton premier jeu<br>en appuyant sur le bouton ➕</div><button class="empty-btn" onclick="openForm()">➕ Ajouter un jeu</button>`;
+      grid.parentNode.insertBefore(es, grid);
+    }
+    es.style.display = 'flex';
+    return;
+  }
+
+  const es = document.getElementById('emptyState');
+  if (es) es.style.display = 'none';
+  grid.style.display = 'grid';
+
+  grid.innerHTML = filtered.map((g, i) => `
+    <div class="game-card" style="animation-delay:${i*0.04}s" onclick="openGame('${g.id}')">
+      <div class="game-cover-ph">${g.emoji || '🎮'}</div>
+      <span class="game-badge badge-${g.contenu || 'Loose'}">${g.contenu || 'Loose'}</span>
+      <div class="game-info">
+        <div class="game-title">${g.titre || 'Sans titre'}</div>
+        <div class="game-platform">${g.plateforme || '—'}</div>
+      </div>
+    </div>`).join('');
+}
+
+function setFilter(el, f) {
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  currentFilter = f;
+  renderGames();
+}
+
+function filterGames(val) {
+  currentSearch = val;
+  renderGames();
+}
+
+// ===== FORMULAIRE =====
+function openForm(gameId = null) {
+  editMode = !!gameId;
+  currentGameId = gameId;
+  document.getElementById('formTitle').textContent = editMode ? '✏️ Modifier le jeu' : '➕ Ajouter un jeu';
+  document.getElementById('formSubmitBtn').textContent = editMode ? '✓ ENREGISTRER LES MODIFICATIONS' : '✓ AJOUTER À LA COLLECTION';
+
+  resetForm();
+
+  if (editMode) {
+    const g = collection.find(x => x.id === gameId);
+    if (g) prefillForm(g);
+  }
+
+  document.getElementById('formOverlay').classList.add('open');
+  closeGameModal();
+}
+
+function prefillForm(g) {
+  document.getElementById('fTitre').value = g.titre || '';
+  document.getElementById('fPlateforme').value = g.plateforme || '';
+  document.getElementById('fRegion').value = g.region || 'EUR';
+  document.getElementById('fAnnee').value = g.annee || '';
+  document.getElementById('fGenre').value = g.genre || '';
+  document.getElementById('fSupport').value = g.support || 'Cartouche';
+  document.getElementById('fEdition').value = g.edition || 'Standard';
+  document.getElementById('fPrix').value = g.prix || '';
+  document.getElementById('fCote').value = g.cote || '';
+  document.getElementById('fEmoji').value = g.emoji || '';
+  document.getElementById('fNotes').value = g.notes || '';
+
+  if (g.contenu) {
+    const el = [...document.querySelectorAll('#fContenu .chip-option')].find(e => e.dataset.val === g.contenu || e.textContent.includes(g.contenu));
+    if (el) el.classList.add('selected');
+  }
+  if (g.objectif) {
+    const el = [...document.querySelectorAll('#fObjectif .chip-option')].find(e => e.textContent.includes(g.objectif));
+    if (el) el.classList.add('selected');
+  }
+  ['Jeu','Boite','Manuel'].forEach(k => {
+    const val = k === 'Jeu' ? g.etatJeu : k === 'Boite' ? g.etatBoite : g.etatManuel;
+    if (val) {
+      const el = [...document.querySelectorAll(`#fEtat${k} .etat-opt`)].find(e => e.textContent === val);
+      if (el) { el.classList.add(`sel-${val.replace(' ','\ ')}`); el.dataset.selected = val; }
+    }
+  });
+}
+
+function resetForm() {
+  ['fTitre','fAnnee','fPrix','fCote','fEmoji','fNotes'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('fPlateforme').value = '';
+  document.getElementById('fRegion').value = 'EUR';
+  document.getElementById('fGenre').value = '';
+  document.getElementById('fSupport').value = 'Cartouche';
+  document.getElementById('fEdition').value = 'Standard';
+  document.querySelectorAll('.chip-option').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.etat-opt').forEach(c => { c.className = 'etat-opt'; delete c.dataset.selected; });
+}
+
+function closeForm() { document.getElementById('formOverlay').classList.remove('open'); }
+function closeFormOutside(e) { if (e.target === document.getElementById('formOverlay')) closeForm(); }
+
+function selectChip(groupId, el, val) {
+  document.querySelectorAll(`#${groupId} .chip-option`).forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function selectEtat(groupId, el, val) {
+  document.querySelectorAll(`#${groupId} .etat-opt`).forEach(c => { c.className = 'etat-opt'; delete c.dataset.selected; });
+  el.classList.add(`sel-${CSS.escape(val)}`);
+  el.dataset.selected = val;
+}
+
+function getSelected(groupId, type='chip') {
+  if (type === 'chip') {
+    const el = document.querySelector(`#${groupId} .chip-option.selected`);
+    return el ? el.textContent.replace(/[🔵🟢🟡💜🔴]/,'').trim() : '';
+  } else {
+    const el = document.querySelector(`#${groupId} .etat-opt[data-selected]`);
+    return el ? el.dataset.selected : '';
+  }
+}
+
+function saveGame() {
+  const titre = document.getElementById('fTitre').value.trim();
+  const plateforme = document.getElementById('fPlateforme').value;
+
+  if (!titre) { showToast('⚠️ Le titre est obligatoire'); return; }
+  if (!plateforme) { showToast('⚠️ La plateforme est obligatoire'); return; }
+
+  const etatJeu = getSelected('fEtatJeu', 'etat');
+  if (!etatJeu) { showToast('⚠️ Sélectionne l\'état du jeu'); return; }
+
+  const game = {
+    id: editMode ? currentGameId : Date.now().toString(),
+    titre,
+    plateforme,
+    region: document.getElementById('fRegion').value,
+    annee: document.getElementById('fAnnee').value,
+    genre: document.getElementById('fGenre').value,
+    support: document.getElementById('fSupport').value,
+    edition: document.getElementById('fEdition').value,
+    contenu: getSelected('fContenu', 'chip') || 'Loose',
+    etatJeu,
+    etatBoite: getSelected('fEtatBoite', 'etat') || '—',
+    etatManuel: getSelected('fEtatManuel', 'etat') || '—',
+    prix: document.getElementById('fPrix').value,
+    cote: document.getElementById('fCote').value,
+    objectif: getSelected('fObjectif', 'chip') || 'À garder',
+    emoji: document.getElementById('fEmoji').value || '🎮',
+    notes: document.getElementById('fNotes').value.trim(),
+    dateAjout: editMode ? (collection.find(g=>g.id===currentGameId)||{}).dateAjout : new Date().toLocaleDateString('fr-FR'),
+  };
+
+  if (editMode) {
+    const idx = collection.findIndex(g => g.id === currentGameId);
+    if (idx !== -1) collection[idx] = game;
+    showToast('✅ Jeu modifié !');
+  } else {
+    collection.push(game);
+    showToast('✅ Jeu ajouté à la collection !');
+  }
+
+  saveToStorage();
+  closeForm();
+  updateStats();
+  updateFilters();
+  renderGames();
+}
+
+// ===== DETAIL =====
+function openGame(id) {
+  const g = collection.find(x => x.id === id);
+  if (!g) return;
+  currentGameId = id;
+
+  document.getElementById('mCover').textContent = g.emoji || '🎮';
+  document.getElementById('mTitle').textContent = g.titre;
+  document.getElementById('mPlat').textContent = g.plateforme;
+  document.getElementById('mPaid').textContent = g.prix ? g.prix + '€' : '—';
+  document.getElementById('mCote').textContent = g.cote ? g.cote + '€' : '—';
+
+  ['J','B','M'].forEach((k,i) => {
+    const vals = [g.etatJeu, g.etatBoite, g.etatManuel];
+    const val = vals[i] || '—';
+    document.getElementById('e'+k+'V').textContent = val;
+    document.getElementById('e'+k+'V').style.color = SC[val] || '#ccc';
+    document.getElementById('e'+k).style.borderColor = (SC[val] || '#ccc') + '44';
+  });
+
+  const cs = CS[g.contenu] || CS['Loose'];
+  document.getElementById('mContenu').innerHTML = `<div class="contenu-badge" style="background:${cs.bg};color:${cs.c};border-color:${cs.b}">● ${g.contenu || 'Loose'}</div>`;
+
+  document.getElementById('mDetails').innerHTML = `
+    <div class="detail-item"><div class="detail-label">Objectif</div><div class="detail-val" style="color:${OC[g.objectif]||'#ccc'}">${g.objectif||'—'}</div></div>
+    <div class="detail-item"><div class="detail-label">Région</div><div class="detail-val">${g.region||'—'}</div></div>
+    <div class="detail-item"><div class="detail-label">Édition</div><div class="detail-val">${g.edition||'—'}</div></div>
+    <div class="detail-item"><div class="detail-label">Support</div><div class="detail-val">${g.support||'—'}</div></div>
+    <div class="detail-item"><div class="detail-label">Année</div><div class="detail-val">${g.annee||'—'}</div></div>
+    <div class="detail-item"><div class="detail-label">Genre</div><div class="detail-val">${g.genre||'—'}</div></div>
+    <div class="detail-item"><div class="detail-label">Ajouté le</div><div class="detail-val">${g.dateAjout||'—'}</div></div>`;
+
+  const ns = document.getElementById('mNotesSection');
+  if (g.notes) { ns.style.display='block'; document.getElementById('mNotes').textContent = g.notes; }
+  else { ns.style.display='none'; }
+
+  document.getElementById('gameModal').classList.add('open');
+}
+
+function closeModalOutside(e) { if (e.target === document.getElementById('gameModal')) closeGameModal(); }
+function closeGameModal() { document.getElementById('gameModal').classList.remove('open'); }
+
+function editGame() { openForm(currentGameId); }
+
+function deleteGame() {
+  if (!confirm('Supprimer ce jeu de la collection ?')) return;
+  collection = collection.filter(g => g.id !== currentGameId);
+  saveToStorage();
+  closeGameModal();
+  updateStats();
+  updateFilters();
+  renderGames();
+  showToast('🗑️ Jeu supprimé');
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+
+
+
+
+
+const regionParSysteme = {
+  'Famicom':'JAP','Super Famicom':'JAP','Virtual Boy':'JAP','Sega SG-1000':'JAP','Sega Pico':'JAP','MSX':'JAP','Neo Geo':'JAP','Neo Geo Pocket':'JAP','PC Engine':'JAP',
+  'NES':'EUR','SNES':'EUR','N64':'EUR','GameCube':'EUR','Wii':'EUR','Wii U':'EUR','Switch':'EUR','GameBoy':'EUR','GameBoy Color':'EUR','GameBoy Advance':'EUR','DS':'EUR','3DS':'EUR',
+  'PS1':'EUR','PS2':'EUR','PS3':'EUR','PS4':'EUR','PS5':'EUR','PSP':'EUR','PS Vita':'EUR',
+  'Sega Master System':'EUR','Sega Mega Drive':'EUR','Sega Mega-CD':'EUR','Sega 32X':'EUR','Sega Saturn':'EUR','Sega Dreamcast':'EUR','Sega Game Gear':'EUR',
+  'Atari ST':'EUR','Commodore 64':'EUR','Commodore VIC-20':'EUR','Commodore 16':'EUR','Commodore Amiga 500':'EUR','Commodore Amiga 600':'EUR','Commodore Amiga 1200':'EUR',
+  'Oric 48':'EUR','Oric Atmos':'EUR','Telestrat':'EUR','Amstrad CPC':'EUR','Amstrad GX4000':'EUR','ZX Spectrum':'EUR','Thomson MO5':'EUR','Thomson TO7':'EUR','BBC Micro':'EUR','PC':'EUR',
+  'Xbox':'US','Xbox 360':'US','Xbox One':'US','Xbox Series':'US','Atari 2600':'US','Atari 5200':'US','Atari 7800':'US','Atari 400':'US','Atari 800':'US','Atari Lynx':'US','Atari Jaguar':'US','TurboGrafx-16':'US',
+};
+document.getElementById('fPlateforme').addEventListener('change', function() {
+  const region = regionParSysteme[this.value];
+  if (region) { document.getElementById('fRegion').value = region; showToast('🌍 Région auto : ' + region); }
+});
+updateStats();
+updateFilters();
+renderGames();
+
+// ===== ASSISTANT VOCAL =====
+const voiceSteps = [
+  { key:'titre',      question:"Quel est le titre du jeu ?",           hint:"Ex: Final Fantasy VII, Mario Kart...",          required:true },
+  { key:'plateforme', question:"Sur quelle plateforme ?",              hint:"Ex: PS1, Switch, Mega Drive, SNES...",          required:true },
+  { key:'etatJeu',    question:"Quel est l'état du jeu ?",             hint:"Neuf, Très bon, Bon, Mauvais ou Hors service",  required:true },
+  { key:'etatBoite',  question:"Quel est l'état de la boîte ?",        hint:"Neuf, Très bon, Bon, Mauvais ou dites Passer",  required:false },
+  { key:'etatManuel', question:"Quel est l'état du manuel ?",          hint:"Neuf, Très bon, Bon, Mauvais ou dites Passer",  required:false },
+  { key:'contenu',    question:"Complet, Loose ou Blister ?",          hint:"Complet = jeu+boîte+manuel, Loose = jeu seul",  required:false },
+  { key:'region',     question:"Quelle région ?",                      hint:"EUR, US ou JAP, ou dites Passer pour auto",     required:false },
+  { key:'prix',       question:"Combien tu l'as payé en euros ?",      hint:"Dites le montant, ex: 25 euros, ou Passer",     required:false },
+  { key:'cote',       question:"Quelle est la cote actuelle ?",        hint:"Valeur estimée en euros, ou dites Passer",      required:false },
+  { key:'objectif',   question:"Quel est ton objectif pour ce jeu ?",  hint:"Garder, Vendre, Réparer ou Échanger",           required:false },
+];
+
+const etatMap = {
+  'neuf':'Neuf','nouveau':'Neuf',
+  'tres bon':'Très bon','très bon':'Très bon','très bien':'Très bon','impeccable':'Très bon',
+  'bon':'Bon','bien':'Bon','correct':'Bon',
+  'mauvais':'Mauvais','abimé':'Mauvais','abîmé':'Mauvais','endommagé':'Mauvais',
+  'hors service':'Hors service','cassé':'Hors service','hs':'Hors service'
+};
+const contenuMap = {
+  'complet':'Complet','complete':'Complet',
+  'loose':'Loose','seul':'Loose','nu':'Loose',
+  'blister':'Blister','scellé':'Blister','scelle':'Blister'
+};
+const regionMap = {
+  'eur':'EUR','europe':'EUR','pal':'EUR','français':'EUR','francais':'EUR',
+  'us':'US','usa':'US','américain':'US','americain':'US','ntsc':'US',
+  'jap':'JAP','japon':'JAP','japonais':'JAP','japan':'JAP'
+};
+const objectifMap = {
+  'garder':'À garder','conserver':'À garder','garde':'À garder',
+  'vendre':'À vendre','vente':'À vendre',
+  'réparer':'À réparer','reparer':'À réparer',
+  'échanger':'À échanger','echanger':'À échanger','échange':'À échanger'
+};
+const platMap = {
+  'ps1':'PS1','playstation 1':'PS1','playstation':'PS1',
+  'ps2':'PS2','playstation 2':'PS2','ps3':'PS3','ps4':'PS4','ps5':'PS5',
+  'psp':'PSP','vita':'PS Vita','ps vita':'PS Vita',
+  'switch':'Switch','nintendo switch':'Switch',
+  'nes':'NES','snes':'SNES','super nintendo':'SNES',
+  'super famicom':'Super Famicom','famicom':'Famicom',
+  'n64':'N64','nintendo 64':'N64','gamecube':'GameCube',
+  'wii':'Wii','wii u':'Wii U',
+  'gameboy':'GameBoy','game boy':'GameBoy',
+  'gba':'GameBoy Advance','gbc':'GameBoy Color',
+  'ds':'DS','3ds':'3DS',
+  'xbox':'Xbox','xbox 360':'Xbox 360','xbox one':'Xbox One','xbox series':'Xbox Series',
+  'mega drive':'Sega Mega Drive','megadrive':'Sega Mega Drive',
+  'master system':'Sega Master System','saturn':'Sega Saturn',
+  'dreamcast':'Sega Dreamcast','game gear':'Sega Game Gear',
+  'commodore':'Commodore 64','c64':'Commodore 64',
+  'amiga':'Commodore Amiga 500',
+  'atari':'Atari 2600','jaguar':'Atari Jaguar',
+  'oric':'Oric 48','oric 48':'Oric 48',
+  'pc':'PC','amstrad':'Amstrad CPC'
+};
+
+let voiceData = {};
+let voiceCurrentStep = 0;
+let voiceRecognition = null;
+const voiceSynth = window.speechSynthesis;
+
+function openVoiceAssistant() {
+  voiceData = {};
+  voiceCurrentStep = 0;
+  document.getElementById('voiceOverlay').classList.add('open');
+  document.getElementById('voiceRecap').style.display = 'none';
+  document.getElementById('voiceConfirmBtn').style.display = 'none';
+  document.getElementById('voiceSkipBtn').style.display = 'inline-block';
+  updateVoiceProgress();
+  askVoiceStep();
+}
+
+function closeVoiceAssistant() {
+  document.getElementById('voiceOverlay').classList.remove('open');
+  if (voiceRecognition) { try { voiceRecognition.abort(); } catch(e){} }
+  if (voiceSynth) voiceSynth.cancel();
+  document.getElementById('voiceNavBtn').classList.remove('listening');
+}
+
+function updateVoiceProgress() {
+  const prog = document.getElementById('voiceProgress');
+  prog.innerHTML = voiceSteps.map((s,i) =>
+    '<div class="voice-step ' + (i < voiceCurrentStep ? 'done' : i === voiceCurrentStep ? 'active' : '') + '"></div>'
+  ).join('');
+}
+
+function speak(text, callback) {
+  // Afficher le texte à l'écran dans tous les cas
+  console.log('🔊 ' + text);
+  if (!voiceSynth) { if(callback) setTimeout(callback, 800); return; }
+  try {
+    voiceSynth.cancel();
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.lang = 'fr-FR'; utt.rate = 1.0; utt.pitch = 1; utt.volume = 1;
+    // Choisir une voix française si disponible
+    const voices = voiceSynth.getVoices();
+    const frVoice = voices.find(v => v.lang.startsWith('fr'));
+    if (frVoice) utt.voice = frVoice;
+    utt.onend = () => { if(callback) setTimeout(callback, 200); };
+    utt.onerror = () => { if(callback) setTimeout(callback, 800); };
+    voiceSynth.speak(utt);
+    // Fallback si la synthèse ne démarre pas après 3s
+    setTimeout(() => {
+      if (voiceSynth.speaking === false && callback) callback();
+    }, 3000);
+  } catch(e) {
+    if(callback) setTimeout(callback, 800);
+  }
+}
+
+// Précharger les voix dès que possible
+if (window.speechSynthesis) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+}
+
+function askVoiceStep() {
+  if (voiceCurrentStep >= voiceSteps.length) { showVoiceRecap(); return; }
+  const step = voiceSteps[voiceCurrentStep];
+  document.getElementById('voiceQuestion').textContent = step.question;
+  document.getElementById('voiceHint').textContent = step.hint;
+  document.getElementById('voiceAnswer').textContent = '👇 Appuie sur l\'orbe pour répondre';
+  document.getElementById('voiceSkipBtn').textContent = step.required ? '🔄 Répéter' : 'Passer →';
+  updateVoiceProgress();
+  // Sur mobile : toujours attendre le clic sur l'orbe
+  document.getElementById('voiceOrb').onclick = () => {
+    document.getElementById('voiceOrb').onclick = null;
+    document.getElementById('voiceAnswer').textContent = '...';
+    speak(step.question, () => startListening());
+  };
+}
+
+function startListening() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    document.getElementById('voiceAnswer').textContent = 'Utilise Chrome Android pour la reconnaissance vocale';
+    return;
+  }
+  document.getElementById('voiceOrb').classList.add('listening');
+  document.getElementById('voiceNavBtn').classList.add('listening');
+
+  voiceRecognition = new SR();
+  voiceRecognition.lang = 'fr-FR';
+  voiceRecognition.continuous = false;
+  voiceRecognition.interimResults = true;
+
+  voiceRecognition.onresult = (e) => {
+    const transcript = Array.from(e.results).map(r => r[0].transcript).join('').toLowerCase().trim();
+    document.getElementById('voiceAnswer').textContent = transcript;
+    if (e.results[e.results.length-1].isFinal) processVoiceAnswer(transcript);
+  };
+
+  voiceRecognition.onerror = () => {
+    document.getElementById('voiceOrb').classList.remove('listening');
+    document.getElementById('voiceNavBtn').classList.remove('listening');
+    document.getElementById('voiceAnswer').textContent = 'Non entendu, réessaie...';
+    setTimeout(() => startListening(), 1500);
+  };
+
+  voiceRecognition.onend = () => {
+    document.getElementById('voiceOrb').classList.remove('listening');
+    document.getElementById('voiceNavBtn').classList.remove('listening');
+  };
+
+  voiceRecognition.start();
+}
+
+function processVoiceAnswer(text) {
+  const step = voiceSteps[voiceCurrentStep];
+  let value = '';
+
+  if (step.key === 'titre') {
+    value = text.charAt(0).toUpperCase() + text.slice(1);
+
+  } else if (step.key === 'plateforme') {
+    for (const [k,v] of Object.entries(platMap)) {
+      if (text.includes(k)) { value = v; break; }
+    }
+    if (!value) value = text.charAt(0).toUpperCase() + text.slice(1);
+
+  } else if (['etatJeu','etatBoite','etatManuel'].includes(step.key)) {
+    if (text.includes('passer') || text.includes('sans') || text.includes('pas de')) {
+      voiceCurrentStep++; askVoiceStep(); return;
+    }
+    for (const [k,v] of Object.entries(etatMap)) {
+      if (text.includes(k)) { value = v; break; }
+    }
+    if (!value) {
+      speak("Je n'ai pas compris, dis Neuf, Très bon, Bon, Mauvais ou Hors service", () => startListening());
+      return;
+    }
+
+  } else if (step.key === 'contenu') {
+    if (text.includes('passer')) { voiceCurrentStep++; askVoiceStep(); return; }
+    for (const [k,v] of Object.entries(contenuMap)) {
+      if (text.includes(k)) { value = v; break; }
+    }
+    if (!value) value = 'Loose';
+
+  } else if (step.key === 'region') {
+    if (text.includes('passer') || text.includes('auto')) {
+      value = (typeof regionParSysteme !== 'undefined' && regionParSysteme[voiceData.plateforme]) || 'EUR';
+    } else {
+      for (const [k,v] of Object.entries(regionMap)) {
+        if (text.includes(k)) { value = v; break; }
+      }
+      if (!value) value = 'EUR';
+    }
+
+  } else if (step.key === 'prix' || step.key === 'cote') {
+    if (text.includes('passer') || text.includes('sais pas')) {
+      voiceCurrentStep++; askVoiceStep(); return;
+    }
+    const match = text.match(/\d+/);
+    value = match ? match[0] : '';
+
+  } else if (step.key === 'objectif') {
+    if (text.includes('passer')) { value = 'À garder'; }
+    else {
+      for (const [k,v] of Object.entries(objectifMap)) {
+        if (text.includes(k)) { value = v; break; }
+      }
+    }
+    if (!value) value = 'À garder';
+  }
+
+  voiceData[step.key] = value;
+  document.getElementById('voiceAnswer').textContent = '✓ ' + value;
+  speak(value, () => { voiceCurrentStep++; setTimeout(() => askVoiceStep(), 300); });
+}
+
+function voiceSkip() {
+  const step = voiceSteps[voiceCurrentStep];
+  if (step.required) { askVoiceStep(); return; }
+  voiceCurrentStep++;
+  askVoiceStep();
+}
+
+function showVoiceRecap() {
+  if (voiceRecognition) { try { voiceRecognition.abort(); } catch(e){} }
+  document.getElementById('voiceQuestion').textContent = '✅ Récapitulatif';
+  document.getElementById('voiceAnswer').textContent = 'Vérifie et confirme !';
+  document.getElementById('voiceHint').textContent = '';
+  document.getElementById('voiceSkipBtn').style.display = 'none';
+  document.getElementById('voiceConfirmBtn').style.display = 'inline-block';
+
+  const labels = {
+    titre:'Titre', plateforme:'Plateforme', etatJeu:'État Jeu',
+    etatBoite:'État Boîte', etatManuel:'État Manuel', contenu:'Contenu',
+    region:'Région', prix:'Prix payé', cote:'Cote', objectif:'Objectif'
+  };
+  const recap = document.getElementById('voiceRecap');
+  recap.style.display = 'block';
+  recap.innerHTML = '<div class="voice-recap-title">🎮 ' + (voiceData.titre||'—') + '</div>' +
+    Object.entries(voiceData).filter(function(e){ return e[1]; }).map(function(e){
+      return '<div class="voice-recap-item"><span class="voice-recap-label">' + (labels[e[0]]||e[0]) + '</span><span class="voice-recap-val">' + e[1] + '</span></div>';
+    }).join('');
+
+  speak('Voici le récapitulatif. Confirme pour ajouter le jeu.');
+}
+
+function voiceConfirm() {
+  const game = {
+    id: Date.now().toString(),
+    titre: voiceData.titre || '',
+    plateforme: voiceData.plateforme || '',
+    region: voiceData.region || 'EUR',
+    etatJeu: voiceData.etatJeu || 'Bon',
+    etatBoite: voiceData.etatBoite || '—',
+    etatManuel: voiceData.etatManuel || '—',
+    contenu: voiceData.contenu || 'Loose',
+    objectif: voiceData.objectif || 'À garder',
+    prix: voiceData.prix || '',
+    cote: voiceData.cote || '',
+    emoji: '🎮',
+    annee: '', genre: '', support: 'Disque', edition: 'Standard', notes: '',
+    dateAjout: new Date().toLocaleDateString('fr-FR'),
+  };
+  collection.push(game);
+  saveToStorage();
+  closeVoiceAssistant();
+  updateStats(); updateFilters(); renderGames();
+  showToast('🎙️ Jeu ajouté par la voix !');
+}
+
+</script>
+
+<!-- ASSISTANT VOCAL -->
+<div class="voice-overlay" id="voiceOverlay">
+  <div class="voice-orb-wrap" style="flex-direction:column;gap:8px">
+    <div class="voice-ring"></div>
+    <div class="voice-ring"></div>
+    <div class="voice-ring"></div>
+    <div class="voice-orb" id="voiceOrb" style="cursor:pointer;">🎙️</div>
+  </div>
+  <div class="voice-progress" id="voiceProgress"></div>
+  <div class="voice-question" id="voiceQuestion">Prêt à écouter...</div>
+  <div class="voice-answer" id="voiceAnswer">—</div>
+  <div class="voice-hint-text" id="voiceHint"></div>
+  <div class="voice-recap" id="voiceRecap" style="display:none"></div>
+  <div class="voice-actions">
+    <button class="voice-skip" id="voiceSkipBtn" onclick="voiceSkip()">Passer →</button>
+    <button class="voice-cancel-btn" onclick="closeVoiceAssistant()">✕ Annuler</button>
+  </div>
+  <button class="voice-confirm" id="voiceConfirmBtn" style="display:none" onclick="voiceConfirm()">✓ AJOUTER LE JEU</button>
+</div>
+</body>
+</html>
