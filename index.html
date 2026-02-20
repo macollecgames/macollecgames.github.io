@@ -923,26 +923,31 @@ function updateVoiceProgress() {
 }
 
 function speak(text, callback) {
-  // Afficher le texte à l'écran dans tous les cas
   console.log('🔊 ' + text);
-  if (!voiceSynth) { if(callback) setTimeout(callback, 800); return; }
+  if (!voiceSynth) { if(callback) setTimeout(callback, 500); return; }
   try {
     voiceSynth.cancel();
     const utt = new SpeechSynthesisUtterance(text);
     utt.lang = 'fr-FR'; utt.rate = 1.0; utt.pitch = 1; utt.volume = 1;
-    // Choisir une voix française si disponible
     const voices = voiceSynth.getVoices();
     const frVoice = voices.find(v => v.lang.startsWith('fr'));
     if (frVoice) utt.voice = frVoice;
-    utt.onend = () => { if(callback) setTimeout(callback, 200); };
-    utt.onerror = () => { if(callback) setTimeout(callback, 800); };
+    utt.onend = () => {
+      // Attendre 600ms après la fin de la voix avant de démarrer le micro
+      if(callback) setTimeout(callback, 600);
+    };
+    utt.onerror = () => { if(callback) setTimeout(callback, 500); };
     voiceSynth.speak(utt);
-    // Fallback si la synthèse ne démarre pas après 3s
+    // Fallback : si pas de son après 4s, lancer le callback quand même
+    let fallbackDone = false;
     setTimeout(() => {
-      if (voiceSynth.speaking === false && callback) callback();
-    }, 3000);
+      if (!fallbackDone && !voiceSynth.speaking) {
+        fallbackDone = true;
+        if(callback) callback();
+      }
+    }, 4000);
   } catch(e) {
-    if(callback) setTimeout(callback, 800);
+    if(callback) setTimeout(callback, 500);
   }
 }
 
@@ -971,64 +976,49 @@ function askVoiceStep() {
 function startListening() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) {
-    document.getElementById('voiceAnswer').textContent = 'Utilise Chrome Android pour la reconnaissance vocale';
+    document.getElementById('voiceAnswer').textContent = 'Utilise Chrome Android';
     return;
   }
-
-  // Si déjà en écoute, juste signaler qu'on attend une nouvelle réponse
-  if (voiceRecognition) {
-    document.getElementById('voiceOrb').classList.add('listening');
-    document.getElementById('voiceNavBtn').classList.add('listening');
-    document.getElementById('voiceAnswer').textContent = '🎙️ Parle maintenant...';
-    voiceWaitingAnswer = true;
-    return;
-  }
-
   document.getElementById('voiceOrb').classList.add('listening');
   document.getElementById('voiceNavBtn').classList.add('listening');
+  document.getElementById('voiceAnswer').textContent = '🎙️ Parle maintenant...';
+
+  try {
+    if (voiceRecognition) voiceRecognition.abort();
+  } catch(e) {}
 
   voiceRecognition = new SR();
   voiceRecognition.lang = 'fr-FR';
-  voiceRecognition.continuous = true; // Garder le micro ouvert !
-  voiceRecognition.interimResults = true;
-  voiceWaitingAnswer = true;
+  voiceRecognition.continuous = false;
+  voiceRecognition.interimResults = false; // Seulement le résultat final
 
   voiceRecognition.onresult = (e) => {
-    if (!voiceWaitingAnswer) return;
-    const results = Array.from(e.results);
-    const lastResult = results[results.length - 1];
-    const transcript = lastResult[0].transcript.toLowerCase().trim();
+    const transcript = e.results[0][0].transcript.toLowerCase().trim();
     document.getElementById('voiceAnswer').textContent = transcript;
-    if (lastResult.isFinal && voiceWaitingAnswer) {
-      voiceWaitingAnswer = false;
-      document.getElementById('voiceOrb').classList.remove('listening');
-      processVoiceAnswer(transcript);
-    }
+    document.getElementById('voiceOrb').classList.remove('listening');
+    document.getElementById('voiceNavBtn').classList.remove('listening');
+    processVoiceAnswer(transcript);
   };
 
   voiceRecognition.onerror = (e) => {
-    if (e.error === 'no-speech') {
-      document.getElementById('voiceAnswer').textContent = '🎙️ Parle maintenant...';
-      return;
-    }
     document.getElementById('voiceOrb').classList.remove('listening');
     document.getElementById('voiceNavBtn').classList.remove('listening');
-    document.getElementById('voiceAnswer').textContent = 'Erreur micro, réessaie...';
-    voiceRecognition = null;
-    setTimeout(() => startListening(), 1500);
+    if (e.error === 'no-speech') {
+      document.getElementById('voiceAnswer').textContent = '👇 Appuie sur l\'orbe pour répondre';
+    } else {
+      document.getElementById('voiceAnswer').textContent = 'Non entendu, appuie sur l\'orbe';
+    }
   };
 
   voiceRecognition.onend = () => {
-    // Redémarrer automatiquement si la session est encore active
-    if (voiceCurrentStep < voiceSteps.length && !voiceWaitingRecap) {
-      try { voiceRecognition.start(); } catch(e) {}
-    } else {
-      document.getElementById('voiceOrb').classList.remove('listening');
-      document.getElementById('voiceNavBtn').classList.remove('listening');
-    }
+    document.getElementById('voiceOrb').classList.remove('listening');
+    document.getElementById('voiceNavBtn').classList.remove('listening');
   };
 
-  voiceRecognition.start();
+  // Démarrer APRÈS que la synthèse vocale soit terminée
+  setTimeout(() => {
+    try { voiceRecognition.start(); } catch(e) {}
+  }, 200);
 }
 
 function processVoiceAnswer(text) {
