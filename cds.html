@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CDs — Collectioner</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.18.6/zxing.min.js" crossorigin="anonymous"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap');
+        *{margin:0;padding:0;box-sizing:border-box}html,body{height:100%;width:100%}
+        body{font-family:'Rajdhani',sans-serif;}
+        body.dark-mode{background:linear-gradient(135deg,#0a0e27 0%,#1a0033 50%,#0f0a25 100%);color:#fff}
+        body.light-mode{background:linear-gradient(135deg,#f5f5f5 0%,#e8e8e8 50%,#f0f0f0 100%);color:#333}
+        .header{padding:12px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid;position:sticky;top:0;z-index:50;}
+        body.dark-mode .header{background:rgba(10,15,40,.97);border-color:#0ff;}
+        body.light-mode .header{background:rgba(255,255,255,.97);border-color:#ddd;}
+        .back-btn{background:#0099cc;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:.95rem;}
+        body.light-mode .back-btn{background:#333;}
+        .page-title{font-family:'Orbitron',sans-serif;font-size:1.3rem;font-weight:900;color:#0ff;}
+        body.light-mode .page-title{color:#333;}
+        .stats-text{font-size:.85rem;color:#0ff;}
+        body.light-mode .stats-text{color:#666;}
+        .search-zone{padding:14px 20px;display:flex;gap:10px;flex-wrap:wrap;}
+        .search-bar{flex:1;min-width:220px;display:flex;align-items:center;border:2px solid #0ff;border-radius:8px;padding:0 12px;overflow:hidden;}
+        body.dark-mode .search-bar{background:rgba(10,15,40,.6);}
+        body.light-mode .search-bar{background:#fff;border-color:#ddd;}
+        .search-bar input{background:transparent;border:none;outline:none;color:inherit;padding:9px 4px;width:100%;font-family:'Rajdhani',sans-serif;font-size:.95rem;}
+        .btn-add{background:#00ff88;color:#000;border:none;padding:9px 18px;border-radius:8px;cursor:pointer;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:.95rem;}
+        .container{padding:0 20px 20px;max-width:1400px;margin:0 auto;}
+        .controls{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;padding-top:14px;}
+        .sort-sel{padding:8px 12px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-size:.9rem;cursor:pointer;}
+        body.dark-mode .sort-sel{background:rgba(10,15,40,.6);border:2px solid #0ff;color:#fff;}
+        body.light-mode .sort-sel{background:#fff;border:2px solid #ddd;color:#333;}
+        .view-btns{display:flex;gap:6px;}
+        .view-btn{padding:8px 14px;border:none;border-radius:6px;cursor:pointer;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:.9rem;}
+        body.dark-mode .view-btn{background:#0099cc;color:#fff;}
+        body.light-mode .view-btn{background:#333;color:#fff;}
+        .view-btn.active{background:#00ff88;color:#000;}
+        .stats-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:18px;padding:14px;border-radius:10px;}
+        body.dark-mode .stats-panel{background:rgba(0,200,255,.06);border:2px solid rgba(0,200,255,.2);}
+        body.light-mode .stats-panel{background:rgba(0,0,0,.04);border:2px solid #e0e0e0;}
+        .stat-item{text-align:center;}
+        .stat-val{font-family:'Orbitron',sans-serif;font-size:1.6rem;font-weight:700;color:#0ff;}
+        body.light-mode .stat-val{color:#333;}
+        .stat-lbl{font-size:.78rem;opacity:.55;margin-top:2px;}
+        .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:18px;}
+        .vinyl-box{perspective:1000px;height:195px;cursor:pointer;}
+        .vinyl-card{width:100%;height:100%;position:relative;transition:transform .4s;border-radius:5px;overflow:hidden;}
+        body.dark-mode .vinyl-card{border:2.5px solid #0ff;}
+        body.light-mode .vinyl-card{border:2px solid #ccc;}
+        .vinyl-box:hover .vinyl-card{transform:rotateY(6deg) rotateX(-5deg);}
+        .vinyl-spine{position:absolute;left:0;width:7px;height:100%;background:linear-gradient(to right,rgba(0,0,0,.5),transparent);z-index:1;}
+        .vinyl-cover{position:absolute;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:3rem;background-size:cover;background-position:center;}
+        body.dark-mode .vinyl-cover{background-color:#1a0a20;}
+        body.light-mode .vinyl-cover{background-color:#e8e8e8;}
+        .vinyl-info{position:absolute;bottom:0;width:100%;background:linear-gradient(to top,rgba(0,0,0,.9),transparent);padding:10px;z-index:2;}
+        .vinyl-title{font-size:.72rem;font-weight:700;margin-bottom:2px;color:#fff;line-height:1.2;}
+        .vinyl-artist{font-size:.62rem;color:rgba(255,255,255,.75);}
+        .vinyl-year{font-size:.58rem;color:rgba(255,255,255,.5);}
+        .vinyl-actions{position:absolute;top:5px;right:5px;display:flex;gap:4px;opacity:0;transition:.3s;z-index:10;}
+        .vinyl-box:hover .vinyl-actions{opacity:1;}
+        .vinyl-actions button{background:#0099cc;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:.72rem;font-weight:700;}
+        .vinyl-actions button:hover{background:#00ff88;color:#000;}
+        .list-view{display:flex;flex-direction:column;gap:10px;}
+        .list-item{display:flex;gap:14px;align-items:center;padding:14px;border-radius:8px;}
+        body.dark-mode .list-item{background:rgba(10,15,40,.6);border:2px solid rgba(0,200,255,.25);}
+        body.light-mode .list-item{background:#fff;border:2px solid #e0e0e0;}
+        .list-cover{width:72px;height:72px;border-radius:5px;background-size:cover;background-position:center;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.8rem;}
+        body.dark-mode .list-cover{background-color:#1a0a20;}
+        body.light-mode .list-cover{background-color:#e8e8e8;}
+        .list-info{flex:1;min-width:0;}
+        .list-title{font-size:1rem;font-weight:700;color:#0ff;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        body.light-mode .list-title{color:#333;}
+        .list-sub{font-size:.85rem;opacity:.7;}
+        .list-meta{font-size:.78rem;opacity:.5;margin-top:2px;}
+        .list-actions{display:flex;gap:6px;flex-shrink:0;}
+        .demo-badge{font-size:.58rem;background:rgba(0,200,255,.12);color:#0ff;border:1px solid rgba(0,200,255,.3);border-radius:3px;padding:1px 5px;margin-left:4px;}
+        .loan-badge{font-size:.62rem;background:rgba(255,170,0,.12);color:#fa0;border:1px solid rgba(255,170,0,.3);border-radius:3px;padding:1px 5px;margin-left:4px;}
+        .empty-msg{opacity:.4;text-align:center;padding:50px;grid-column:1/-1;font-size:1.1rem;}
+        .btn{padding:9px 18px;border:none;border-radius:6px;cursor:pointer;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:.9rem;transition:.2s;}
+        .btn:hover{opacity:.85;}
+        .btn-primary{background:#00ff88;color:#000;}
+        .btn-ghost{border:2px solid rgba(0,200,255,.3);background:transparent;color:#0ff;}
+        body.light-mode .btn-ghost{border-color:#ccc;color:#666;}
+        .btn-danger{background:rgba(0,200,255,.1);color:#0ff;border:2px solid rgba(0,200,255,.2);}
+        .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100;align-items:center;justify-content:center;padding:20px;overflow-y:auto;}
+        .modal.active{display:flex;}
+        .modal-content{border-radius:10px;padding:22px;max-width:720px;width:100%;margin:auto;position:relative;max-height:90vh;overflow-y:auto;}
+        body.dark-mode .modal-content{background:#0d1230;border:2px solid #0ff;}
+        body.light-mode .modal-content{background:#fff;border:2px solid #ddd;}
+        .modal-title{font-family:'Orbitron',sans-serif;font-size:1rem;font-weight:700;color:#0ff;margin-bottom:16px;}
+        body.light-mode .modal-title{color:#333;}
+        .close-btn{position:absolute;top:12px;right:12px;background:#0099cc;color:#fff;border:none;padding:5px 11px;border-radius:5px;cursor:pointer;font-weight:700;}
+        .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+        @media(max-width:520px){.form-grid{grid-template-columns:1fr;}}
+        .form-full{grid-column:1/-1;}
+        .form-group{display:flex;flex-direction:column;gap:5px;}
+        .lbl{font-size:.83rem;font-weight:600;opacity:.75;}
+        .req{color:#0ff;}
+        .input,.sel,.txtarea{padding:9px 12px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-size:.9rem;transition:.3s;width:100%;}
+        body.dark-mode .input,body.dark-mode .sel,body.dark-mode .txtarea{background:#0d1a2e;border:2px solid rgba(0,200,255,.2);color:#fff;}
+        body.dark-mode .sel option{background:#0d1a2e;color:#fff;}
+        body.light-mode .sel option{background:#fff;color:#333;}
+        body.light-mode .input,body.light-mode .sel,body.light-mode .txtarea{background:#f8f8f8;border:2px solid #e0e0e0;color:#333;}
+        .input:focus,.sel:focus,.txtarea:focus{outline:none;}
+        body.dark-mode .input:focus,body.dark-mode .sel:focus,body.dark-mode .txtarea:focus{border-color:#0ff;}
+        .txtarea{min-height:70px;resize:vertical;}
+        .preview{width:100%;height:130px;border-radius:6px;margin-top:8px;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:3rem;}
+        body.dark-mode .preview{background-color:rgba(0,200,255,.05);border:2px dashed rgba(0,200,255,.2);}
+        body.light-mode .preview{background-color:#f0f0f0;border:2px dashed #ddd;}
+        .btn-row{display:flex;gap:10px;margin-top:16px;}
+        .err-msg{padding:10px;border-radius:5px;font-size:.85rem;font-weight:700;margin-top:8px;background:rgba(0,200,255,.1);border:2px solid rgba(0,200,255,.3);color:#0ff;}
+        /* API search zone */
+        .api-zone{padding:14px;border-radius:8px;margin-bottom:16px;}
+        body.dark-mode .api-zone{background:rgba(0,200,255,.05);border:2px solid rgba(0,200,255,.2);}
+        body.light-mode .api-zone{background:#fff8fc;border:2px solid #f0d0e0;}
+        .api-zone-title{font-size:.83rem;font-weight:700;margin-bottom:10px;color:#0ff;display:flex;align-items:center;gap:6px;}
+        .api-row{display:flex;gap:8px;}
+        .api-input{flex:1;padding:9px 12px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-size:.9rem;}
+        body.dark-mode .api-input{background:rgba(0,0,0,.3);border:2px solid rgba(0,200,255,.2);color:#fff;}
+        body.light-mode .api-input{background:#fff;border:2px solid #ddd;color:#333;}
+        .api-input:focus{outline:none;border-color:#0ff;}
+        .btn-scan-sm{background:#0099cc;color:#fff;border:none;padding:9px 13px;border-radius:6px;cursor:pointer;font-weight:700;font-size:.9rem;}
+        .btn-search-sm{background:rgba(0,200,255,.15);color:#0ff;border:2px solid rgba(0,200,255,.3);padding:9px 13px;border-radius:6px;cursor:pointer;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:.9rem;}
+        .api-status{font-size:.75rem;opacity:.6;margin-top:6px;display:block;}
+        .results-list{margin-top:8px;display:flex;flex-direction:column;gap:5px;max-height:200px;overflow-y:auto;}
+        .res-item{display:flex;gap:10px;align-items:center;padding:7px 10px;border-radius:6px;cursor:pointer;transition:.2s;}
+        body.dark-mode .res-item{background:rgba(255,255,255,.04);border:1px solid rgba(0,200,255,.15);}
+        body.light-mode .res-item{background:#f8f8f8;border:1px solid #e0e0e0;}
+        .res-item:hover{border-color:#0ff;}
+        .res-thumb{width:38px;height:38px;border-radius:4px;background-size:cover;background-position:center;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.1rem;}
+        body.dark-mode .res-thumb{background-color:#1a0a20;}
+        body.light-mode .res-thumb{background-color:#e0e0e0;}
+        .res-title{font-size:.85rem;font-weight:700;}
+        .res-sub{font-size:.72rem;opacity:.5;}
+        /* Scanner */
+        .scanner-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:200;align-items:center;justify-content:center;flex-direction:column;gap:18px;}
+        .scanner-overlay.active{display:flex;}
+        #scanVideo{width:min(330px,90vw);border-radius:10px;border:3px solid #0ff;}
+        .scanner-hint{color:rgba(255,255,255,.7);font-size:.9rem;}
+        .btn-scanner-close{background:#0099cc;color:#fff;border:none;padding:10px 28px;border-radius:8px;cursor:pointer;font-weight:700;font-family:'Rajdhani',sans-serif;}
+        .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:#00ff88;color:#000;font-weight:700;font-size:.9rem;padding:11px 24px;border-radius:8px;z-index:9999;opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap;font-family:'Rajdhani',sans-serif;}
+        .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+        .toast.error{background:#0099cc;color:#fff;}
+    </style>
+</head>
+<body class="dark-mode">
+    <div class="header">
+        <button class="back-btn" onclick="window.location.href='collectioner.html'">← Retour</button>
+        <div class="page-title">💿 CDs</div>
+        <div class="stats-text" id="statsText">0 CDs</div>
+    </div>
+    <div class="search-zone">
+        <div class="search-bar"><input type="text" id="searchInput" placeholder="Rechercher..." oninput="debouncedFilter()"></div>
+        <button class="btn-add" onclick="openAddModal()">+ Ajouter</button>
+    </div>
+    <div class="container">
+        <div class="controls">
+            <select id="sortSel" class="sort-sel" onchange="onSort()">
+                <option value="">Trier par...</option>
+                <option value="title-asc">Titre A-Z</option>
+                <option value="title-desc">Titre Z-A</option>
+                <option value="artist-asc">Artiste A-Z</option>
+                <option value="value-desc">Valeur ↓</option>
+                <option value="year-desc">Année récente</option>
+            </select>
+            <div class="view-btns">
+                <button class="view-btn active" onclick="switchView('grid',this)">▦ Grille</button>
+                <button class="view-btn" onclick="switchView('list',this)">☰ Liste</button>
+            </div>
+        </div>
+        <div class="stats-panel">
+            <div class="stat-item"><div class="stat-val" id="stTotal">0</div><div class="stat-lbl">Total</div></div>
+            <div class="stat-item"><div class="stat-val" id="stValue">0€</div><div class="stat-lbl">Valeur</div></div>
+            <div class="stat-item"><div class="stat-val" id="stLoaned">0</div><div class="stat-lbl">Prêtés</div></div>
+        </div>
+        <div class="grid" id="itemGrid"></div>
+        <div class="list-view" id="itemList" style="display:none;"></div>
+    </div>
+
+    <!-- MODAL ADD/EDIT -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal()">✕</button>
+            <div class="modal-title" id="modalTitle">Ajouter un CD</div>
+            <!-- API SEARCH -->
+            <div class="api-zone">
+                <div class="api-zone-title">🔍 Recherche automatique</div>
+                <div class="api-row">
+                    <input type="text" id="apiQ" class="api-input" placeholder="Titre, artiste ou colle le code-barres..." onkeydown="if(event.key==='Enter')doApiSearch()">
+                    <button class="btn-search-sm" onclick="doApiSearch()">Chercher</button>
+                    <button class="btn-scan-sm" onclick="openScanner()" title="Scanner code-barres">📷</button>
+                </div>
+                <span id="apiSt" class="api-status"></span>
+                <div id="apiRes" class="results-list"></div>
+            </div>
+            <!-- FORM -->
+            <div class="form-grid">
+                <div class="form-group form-full"><label class="lbl">Titre <span class="req">*</span></label><input type="text" id="fTitle" class="input"></div>
+                <div class="form-group"><label class="lbl">Artiste</label><input type="text" id="fArtist" class="input"></div>
+                <div class="form-group"><label class="lbl">Année</label><input type="number" id="fYear" class="input" min="1900" max="2099"></div>
+                <div class="form-group"><label class="lbl">Genre</label><input type="text" id="fGenre" class="input"></div>
+                <div class="form-group"><label class="lbl">Label</label><input type="text" id="fLabel" class="input"></div>
+                <div class="form-group"><label class="lbl">Nb disques</label>
+                    <select id="fDiscCount" class="sel"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5+</option></select></div>
+                <div class="form-group"><label class="lbl">Tours</label>
+                    <select id="fSize" class="sel"><option value="33">33 tours</option><option value="45">45 tours</option><option value="78">78 tours</option></select></div>
+                <div class="form-group"><label class="lbl">Couleur</label><input type="text" id="fColor" class="input" placeholder="Noir, Rouge..."></div>
+                <div class="form-group"><label class="lbl">État disque</label>
+                    <select id="fDiskSt" class="sel"><option value="">—</option><option>Neuf</option><option>Excellent</option><option>Bon</option><option>Acceptable</option><option>Usé</option></select></div>
+                <div class="form-group"><label class="lbl">État pochette</label>
+                    <select id="fPochSt" class="sel"><option value="">—</option><option>Neuf</option><option>Excellent</option><option>Bon</option><option>Acceptable</option><option>Usé</option></select></div>
+                <div class="form-group"><label class="lbl">Pochette présente</label>
+                    <select id="fPochPres" class="sel"><option value="">—</option><option>Oui</option><option>Non</option></select></div>
+                <div class="form-group"><label class="lbl">Édition</label><input type="text" id="fEdition" class="input"></div>
+                <div class="form-group"><label class="lbl">Prix payé (€)</label><input type="number" id="fPrice" class="input" step="0.01" min="0"></div>
+                <div class="form-group"><label class="lbl">Valeur estimée (€)</label><input type="number" id="fValue" class="input" step="0.01" min="0"></div>
+                <div class="form-group form-full"><label class="lbl">Prêté à</label><input type="text" id="fLoan" class="input" placeholder="Nom de la personne"></div>
+                <div class="form-group form-full"><label class="lbl">Notes</label><textarea id="fNotes" class="txtarea"></textarea></div>
+                <div class="form-group form-full">
+                    <label class="lbl">Pochette (URL auto ou upload local)</label>
+                    <input type="text" id="fCoverUrl" class="input" placeholder="URL image (remplie automatiquement par la recherche)">
+                    <input type="file" id="fCoverFile" class="input" accept="image/*" onchange="previewFile()" style="margin-top:6px;">
+                    <div id="coverPrev" class="preview">💿</div>
+                </div>
+            </div>
+            <div id="modalMsg"></div>
+            <div class="btn-row">
+                <button class="btn btn-primary" id="btnSave" onclick="saveItem()">✓ Ajouter</button>
+                <button class="btn btn-ghost" onclick="closeModal()">Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCANNER -->
+    <div class="scanner-overlay" id="scannerOverlay">
+        <div class="scanner-hint">📷 Pointez le code-barres vers la caméra</div>
+        <video id="scanVideo" autoplay playsinline muted></video>
+        <button class="btn-scanner-close" onclick="closeScanner()">✕ Fermer</button>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+    (function(){ document.body.className = localStorage.getItem('darkMode')!=='false' ? 'dark-mode' : 'light-mode'; })();
+    window.addEventListener('storage', e => { if(e.key==='darkMode') location.reload(); });
+
+    const KEY = 'cdCollection';
+    const DEMO = [
+        {id:'c1',title:'The Wall',artist:'Pink Floyd',year:'1979',genre:'Rock',label:'Harvest',discCount:'2',size:'33',color:'Noir',diskState:'Bon',pochetteState:'Bon',pochettePresent:'Oui',price:30,value:60,edition:'',loanTo:'Marc',notes:'',cover:'https://i.discogs.com/BhpVAq1wR6R8XjfCGcl1VcwBJmjMxKkUkPqBzl6w29g/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIwMTQ3/My0xNTUwMDYzNjEy/LTI0OTguanBlZw.jpeg'},
+        {id:'c2',title:'Born to Run',artist:'Bruce Springsteen',year:'1975',genre:'Rock',label:'Columbia',discCount:'1',size:'33',color:'Noir',diskState:'Acceptable',pochetteState:'Acceptable',pochettePresent:'Oui',price:25,value:80,edition:'Pressage original',loanTo:'',notes:'Rayures légères',cover:''}
+    ];
+
+    let editingId=null, currentView='grid', filterText='', sortVal='', debTimer;
+    let scanStream=null, codeReader=null;
+    window._apiResults=[];
+
+    function loadUser(){ try{ return JSON.parse(localStorage.getItem(KEY))||[]; }catch{ return []; } }
+    function saveUser(list){ try{ localStorage.setItem(KEY,JSON.stringify(list)); }catch{ showToast('⚠ Stockage plein',true); } }
+    function getAll(){ return [...DEMO,...loadUser()]; }
+    function isDemo(id){ return id&&id.startsWith('c')&&id.length<=2; }
+
+    async function loadFromDrive(){
+        const url=localStorage.getItem('driveUrl');
+        if(!url) return;
+        try{
+            const r=await fetch(url);
+            if(!r.ok) return;
+            const data=await r.json();
+            if(Array.isArray(data.cds)) localStorage.setItem(KEY,JSON.stringify(data.cds));
+        }catch{}
+    }
+
+    function debouncedFilter(){ clearTimeout(debTimer); debTimer=setTimeout(()=>{ filterText=document.getElementById('searchInput').value.toLowerCase().trim(); render(); },200); }
+    function onSort(){ sortVal=document.getElementById('sortSel').value; render(); }
+
+    function getVisible(){
+        let items=getAll();
+        if(filterText) items=items.filter(it=>(it.title||'').toLowerCase().includes(filterText)||(it.artist||'').toLowerCase().includes(filterText)||(it.genre||'').toLowerCase().includes(filterText));
+        if(sortVal){ items=[...items]; items.sort((a,b)=>{ if(sortVal==='title-asc') return (a.title||'').localeCompare(b.title||''); if(sortVal==='title-desc') return (b.title||'').localeCompare(a.title||''); if(sortVal==='artist-asc') return (a.artist||'').localeCompare(b.artist||''); if(sortVal==='value-desc') return (b.value||0)-(a.value||0); if(sortVal==='year-desc') return (b.year||0)-(a.year||0); return 0; }); }
+        return items;
+    }
+
+    function render(){ const v=getVisible(); currentView==='grid'?renderGrid(v):renderList(v); updateStats(v); }
+
+    function actionBtns(id,sm){
+        const demo=isDemo(id);
+        const s=sm?'font-size:.72rem;padding:4px 8px;':'';
+        const dis=demo?` disabled style="opacity:.3;cursor:not-allowed;${s}"`:`style="${s}"`;
+        const eF=demo?'':` onclick="editItem('${id}')"`;
+        const dF=demo?'':` onclick="deleteItem('${id}')"`;
+        return `<button class="btn btn-primary"${eF}${dis}>✏️</button><button class="btn btn-danger"${dF}${dis}>🗑️</button>`;
+    }
+
+    function renderGrid(items){
+        const g=document.getElementById('itemGrid');
+        if(!items.length){ g.innerHTML='<p class="empty-msg">💿 Aucun CD</p>'; return; }
+        const C=['#0ff','#0ff','#0f8','#fa0','#f60'];
+        g.innerHTML=items.map((v,i)=>{
+            const color=C[i%5];
+            const disc=v.discCount>1?` (${v.discCount})`:'';
+            const badge=isDemo(v.id)?'<span class="demo-badge">démo</span>':'';
+            const loan=v.loanTo?'<span class="loan-badge">📦</span>':'';
+            const bg=v.cover?`background-image:url(${v.cover});`:'';
+            return `<div class="vinyl-box"><div class="vinyl-card" style="border-color:${color};">
+                <div class="vinyl-spine"></div>
+                <div class="vinyl-cover" style="${bg}">${v.cover?'':'💿'}</div>
+                <div class="vinyl-actions">${actionBtns(v.id,true)}</div>
+                <div class="vinyl-info">
+                    <div class="vinyl-title">${v.title}${disc}${badge}${loan}</div>
+                    <div class="vinyl-artist">${v.artist||''}</div>
+                    <div class="vinyl-year">${v.year||''}</div>
+                </div></div></div>`;
+        }).join('');
+    }
+
+    function renderList(items){
+        const l=document.getElementById('itemList');
+        if(!items.length){ l.innerHTML='<p class="empty-msg">💿 Aucun CD</p>'; return; }
+        l.innerHTML=items.map(v=>{
+            const badge=isDemo(v.id)?'<span class="demo-badge">démo</span>':'';
+            const loan=v.loanTo?`<span class="loan-badge">📦 ${v.loanTo}</span>`:'';
+            const bg=v.cover?`background-image:url(${v.cover});`:'';
+            return `<div class="list-item">
+                <div class="list-cover" style="${bg}">${v.cover?'':'💿'}</div>
+                <div class="list-info">
+                    <div class="list-title">${v.title}${badge}${loan}</div>
+                    <div class="list-sub">${v.artist||'—'}${v.year?' • '+v.year:''}</div>
+                    <div class="list-meta">${v.genre||'—'} • ${v.size||33}T • ${v.color||'—'} • ${v.diskState||'?'}${v.value?' • '+v.value+'€':''}</div>
+                </div>
+                <div class="list-actions">${actionBtns(v.id,false)}</div>
+            </div>`;
+        }).join('');
+    }
+
+    function switchView(mode,btn){
+        currentView=mode;
+        document.getElementById('itemGrid').style.display=mode==='grid'?'grid':'none';
+        document.getElementById('itemList').style.display=mode==='list'?'flex':'none';
+        document.querySelectorAll('.view-btn').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        render();
+    }
+
+    function updateStats(visible){
+        const all=getAll();
+        document.getElementById('stTotal').textContent=all.length;
+        document.getElementById('stValue').textContent=all.reduce((s,it)=>s+(it.value||0),0).toFixed(0)+'€';
+        document.getElementById('stLoaned').textContent=all.filter(it=>it.loanTo).length;
+        document.getElementById('statsText').textContent=(filterText?`${visible.length}/`:'')+all.length+' CDs';
+    }
+
+    function openAddModal(){ editingId=null; document.getElementById('modalTitle').textContent='Ajouter un CD'; document.getElementById('btnSave').textContent='✓ Ajouter'; clearForm(); document.getElementById('addModal').classList.add('active'); }
+    function closeModal(){ document.getElementById('addModal').classList.remove('active'); document.getElementById('apiRes').innerHTML=''; document.getElementById('apiQ').value=''; document.getElementById('apiSt').textContent=''; }
+
+    function clearForm(){
+        ['fTitle','fArtist','fYear','fGenre','fLabel','fColor','fEdition','fLoan','fNotes','fCoverUrl'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+        document.getElementById('fDiscCount').value='1'; document.getElementById('fSize').value='33';
+        ['fDiskSt','fPochSt','fPochPres'].forEach(id=>document.getElementById(id).value='');
+        document.getElementById('fPrice').value=''; document.getElementById('fValue').value='';
+        document.getElementById('fCoverFile').value='';
+        document.getElementById('coverPrev').style.backgroundImage=''; document.getElementById('coverPrev').textContent='💿';
+        document.getElementById('modalMsg').innerHTML='';
+    }
+
+    function previewFile(){
+        const f=document.getElementById('fCoverFile').files[0];
+        if(!f) return;
+        const r=new FileReader();
+        r.onload=e=>{ document.getElementById('coverPrev').style.backgroundImage=`url(${e.target.result})`; document.getElementById('coverPrev').textContent=''; document.getElementById('fCoverUrl').value=''; };
+        r.readAsDataURL(f);
+    }
+
+    function setPreviewUrl(url){
+        document.getElementById('fCoverUrl').value=url;
+        document.getElementById('coverPrev').style.backgroundImage=url?`url(${url})`:'';
+        document.getElementById('coverPrev').textContent=url?'':'💿';
+    }
+
+    // ===== MUSICBRAINZ =====
+    const MB_TTL=86400000;
+    async function searchMB(q){
+        const ckey='mb_cache_'+q.slice(0,50).replace(/\W/g,'');
+        try{ const c=JSON.parse(localStorage.getItem(ckey)||'null'); if(c&&Date.now()-c.ts<MB_TTL) return c.data; }catch{}
+        const isBC=/^\d{8,14}$/.test(q.trim());
+        const url=isBC
+            ?`https://musicbrainz.org/ws/2/release?query=barcode:${q}&limit=5&fmt=json`
+            :`https://musicbrainz.org/ws/2/release?query=${encodeURIComponent(q)}&limit=6&fmt=json`;
+        const r=await fetch(url,{headers:{'User-Agent':'Collectioner/2.0 ( personal )'}});
+        if(!r.ok) throw new Error('MusicBrainz HTTP '+r.status);
+        const data=await r.json();
+        const results=(data.releases||[]).map(rel=>{
+            const artist=(rel['artist-credit']||[]).map(a=>a.artist?.name||a.name||'').filter(Boolean).join(', ');
+            return { id:rel.id, title:rel.title, artist, year:(rel.date||'').slice(0,4), genre:(rel.genres||[])[0]?.name||'', label:((rel['label-info']||[])[0]?.label?.name)||'', cover:`https://coverartarchive.org/release/${rel.id}/front-250`, source:'MusicBrainz' };
+        });
+        try{ localStorage.setItem(ckey,JSON.stringify({ts:Date.now(),data:results})); }catch{}
+        return results;
+    }
+
+    // ===== DISCOGS =====
+    const DC_TTL=86400000;
+    async function searchDiscogs(q){
+        const ckey='discogs_cache_'+q.slice(0,50).replace(/\W/g,'');
+        try{ const c=JSON.parse(localStorage.getItem(ckey)||'null'); if(c&&Date.now()-c.ts<DC_TTL) return c.data; }catch{}
+        const token=localStorage.getItem('discogsToken');
+        const isBC=/^\d{8,14}$/.test(q.trim());
+        const params=new URLSearchParams({type:'release',per_page:'5',page:'1'});
+        if(isBC) params.set('barcode',q); else params.set('q',q);
+        const headers={'User-Agent':'Collectioner/2.0'};
+        if(token) headers['Authorization']='Discogs token='+token;
+        const r=await fetch(`https://api.discogs.com/database/search?${params}`,{headers});
+        if(!r.ok) throw new Error('Discogs HTTP '+r.status);
+        const data=await r.json();
+        const results=(data.results||[]).slice(0,5).map(res=>{
+            const p=(res.title||'').split(' - ');
+            return { id:res.id, title:p[1]||res.title, artist:p[0]||'', year:res.year||'', genre:(res.genre||[])[0]||'', label:(res.label||[])[0]||'', cover:res.cover_image||'', source:'Discogs' };
+        });
+        try{ localStorage.setItem(ckey,JSON.stringify({ts:Date.now(),data:results})); }catch{}
+        return results;
+    }
+
+    async function doApiSearch(){
+        const q=document.getElementById('apiQ').value.trim();
+        if(!q) return;
+        document.getElementById('apiSt').textContent='⏳ Recherche MusicBrainz...';
+        document.getElementById('apiRes').innerHTML='';
+        try {
+            let results=await searchMB(q);
+            if(!results.length){
+                if(localStorage.getItem('discogsToken')){
+                    document.getElementById('apiSt').textContent='⏳ Fallback Discogs...';
+                    results=await searchDiscogs(q);
+                    document.getElementById('apiSt').textContent=`Discogs — ${results.length} résultat(s)`;
+                } else {
+                    document.getElementById('apiSt').textContent='Aucun résultat MusicBrainz. Ajoutez un token Discogs dans Paramètres pour plus de résultats.';
+                }
+            } else {
+                document.getElementById('apiSt').textContent=`MusicBrainz — ${results.length} résultat(s)`;
+            }
+            window._apiResults=results;
+            renderApiResults(results);
+        } catch(e){
+            document.getElementById('apiSt').textContent='❌ '+e.message;
+        }
+    }
+
+    function renderApiResults(results){
+        const el=document.getElementById('apiRes');
+        if(!results.length){ el.innerHTML='<div style="padding:8px;opacity:.4;font-size:.83rem;">Aucun résultat</div>'; return; }
+        el.innerHTML=results.map((r,i)=>`
+            <div class="res-item" onclick="applyResult(${i})">
+                <div class="res-thumb" style="${r.cover?`background-image:url(${r.cover});`:''}">
+                    ${r.cover?'':'🎵'}
+                </div>
+                <div>
+                    <div class="res-title">${r.title}${r.year?' ('+r.year+')':''}</div>
+                    <div class="res-sub">${r.artist||'—'}${r.label?' • '+r.label:''} <span style="opacity:.4;">[${r.source}]</span></div>
+                </div>
+            </div>`).join('');
+    }
+
+    function applyResult(i){
+        const r=window._apiResults[i];
+        if(!r) return;
+        document.getElementById('fTitle').value=r.title||'';
+        document.getElementById('fArtist').value=r.artist||'';
+        document.getElementById('fYear').value=r.year||'';
+        document.getElementById('fGenre').value=r.genre||'';
+        document.getElementById('fLabel').value=r.label||'';
+        if(r.cover) setPreviewUrl(r.cover);
+        document.getElementById('apiRes').innerHTML='';
+        document.getElementById('apiSt').textContent='✅ Informations importées — vérifiez et complétez !';
+    }
+
+    // ===== SCANNER =====
+    function openScanner(){ document.getElementById('scannerOverlay').classList.add('active'); startScanner(); }
+    function closeScanner(){ stopScanner(); document.getElementById('scannerOverlay').classList.remove('active'); }
+
+    async function startScanner(){
+        try{
+            scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+            const vid=document.getElementById('scanVideo');
+            vid.srcObject=scanStream;
+            if(typeof ZXing!=='undefined'){
+                codeReader=new ZXing.BrowserMultiFormatReader();
+                codeReader.decodeFromVideoElement(vid,(result,err)=>{
+                    if(result){ closeScanner(); document.getElementById('apiQ').value=result.getText(); doApiSearch(); }
+                });
+            } else {
+                showToast('⚠ Scanner non disponible',true);
+                closeScanner();
+            }
+        }catch(e){
+            showToast('❌ Caméra : '+e.message,true);
+            closeScanner();
+        }
+    }
+    function stopScanner(){
+        if(codeReader) try{codeReader.reset();}catch{}
+        if(scanStream) scanStream.getTracks().forEach(t=>t.stop());
+        scanStream=null; codeReader=null;
+    }
+
+    // ===== SAVE =====
+    function saveItem(){
+        const title=document.getElementById('fTitle').value.trim();
+        if(!title){ document.getElementById('modalMsg').innerHTML='<div class="err-msg">⚠ Le titre est obligatoire</div>'; return; }
+        const coverFile=document.getElementById('fCoverFile').files[0];
+        const coverUrl=document.getElementById('fCoverUrl').value.trim();
+        const doSave=cover=>{
+            const list=loadUser();
+            const existing=editingId?list.find(i=>i.id===editingId):null;
+            const item={
+                id:editingId||('cd-'+Date.now()),
+                title,
+                artist:document.getElementById('fArtist').value.trim(),
+                year:document.getElementById('fYear').value.trim(),
+                genre:document.getElementById('fGenre').value.trim(),
+                label:document.getElementById('fLabel').value.trim(),
+                discCount:document.getElementById('fDiscCount').value,
+                size:document.getElementById('fSize').value,
+                color:document.getElementById('fColor').value.trim(),
+                diskState:document.getElementById('fDiskSt').value,
+                pochetteState:document.getElementById('fPochSt').value,
+                pochettePresent:document.getElementById('fPochPres').value,
+                price:parseFloat(document.getElementById('fPrice').value)||0,
+                value:parseFloat(document.getElementById('fValue').value)||0,
+                edition:document.getElementById('fEdition').value.trim(),
+                loanTo:document.getElementById('fLoan').value.trim(),
+                notes:document.getElementById('fNotes').value.trim(),
+                cover:cover!==undefined?cover:(existing?existing.cover:null)
+            };
+            if(editingId){ const idx=list.findIndex(i=>i.id===editingId); if(idx>=0)list[idx]=item; else list.push(item); }
+            else list.push(item);
+            saveUser(list); render(); closeModal();
+            showToast(editingId?'✏️ CD modifié !':'✅ CD ajouté !');
+        };
+        if(coverFile){ const rd=new FileReader(); rd.onload=e=>doSave(e.target.result); rd.readAsDataURL(coverFile); }
+        else doSave(coverUrl||undefined);
+    }
+
+    function editItem(id){
+        const item=loadUser().find(i=>i.id===id); if(!item) return;
+        editingId=id;
+        document.getElementById('modalTitle').textContent='Modifier CD';
+        document.getElementById('btnSave').textContent='✓ Modifier';
+        ['fTitle','fArtist','fYear','fGenre','fLabel','fColor','fEdition','fLoan','fNotes'].forEach(f=>{ document.getElementById(f).value=item[f.slice(1).toLowerCase()]||item[f]||''; });
+        document.getElementById('fTitle').value=item.title||'';
+        document.getElementById('fArtist').value=item.artist||'';
+        document.getElementById('fYear').value=item.year||'';
+        document.getElementById('fGenre').value=item.genre||'';
+        document.getElementById('fLabel').value=item.label||'';
+        document.getElementById('fColor').value=item.color||'';
+        document.getElementById('fEdition').value=item.edition||'';
+        document.getElementById('fLoan').value=item.loanTo||'';
+        document.getElementById('fNotes').value=item.notes||'';
+        document.getElementById('fDiscCount').value=item.discCount||'1';
+        document.getElementById('fSize').value=item.size||'33';
+        document.getElementById('fDiskSt').value=item.diskState||'';
+        document.getElementById('fPochSt').value=item.pochetteState||'';
+        document.getElementById('fPochPres').value=item.pochettePresent||'';
+        document.getElementById('fPrice').value=item.price||'';
+        document.getElementById('fValue').value=item.value||'';
+        document.getElementById('fCoverFile').value='';
+        setPreviewUrl(item.cover||'');
+        document.getElementById('modalMsg').innerHTML='';
+        document.getElementById('apiRes').innerHTML='';
+        document.getElementById('apiQ').value='';
+        document.getElementById('apiSt').textContent='';
+        document.getElementById('addModal').classList.add('active');
+    }
+
+    function deleteItem(id){
+        if(!confirm('Supprimer ce CD ?')) return;
+        saveUser(loadUser().filter(i=>i.id!==id));
+        render();
+        showToast('🗑️ CD supprimé');
+    }
+
+    let toastTimer;
+    function showToast(msg,err=false){
+        const t=document.getElementById('toast');
+        t.textContent=msg; t.className='toast show'+(err?' error':'');
+        clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2500);
+    }
+
+    window.addEventListener('load',async()=>{ await loadFromDrive(); render(); });
+    </script>
+</body>
+</html>

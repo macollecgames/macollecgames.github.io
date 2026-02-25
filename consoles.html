@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consoles — Collectioner</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap');
+        *{margin:0;padding:0;box-sizing:border-box}html,body{height:100%;width:100%}
+        body{font-family:'Rajdhani',sans-serif;}
+        body.dark-mode{background:linear-gradient(135deg,#0a0e27 0%,#1a0033 50%,#0f0a25 100%);color:#fff}
+        body.light-mode{background:linear-gradient(135deg,#f5f5f5 0%,#e8e8e8 50%,#f0f0f0 100%);color:#333}
+        .header{padding:12px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid;position:sticky;top:0;z-index:50;}
+        body.dark-mode .header{background:rgba(10,15,40,.97);border-color:#0ff;}
+        body.light-mode .header{background:rgba(255,255,255,.97);border-color:#ddd;}
+        .back-btn{background:#0ff;color:#000;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:.95rem;}
+        body.light-mode .back-btn{background:#333;color:#fff;}
+        .page-title{font-family:'Orbitron',sans-serif;font-size:1.3rem;font-weight:900;color:#0ff;}
+        body.light-mode .page-title{color:#333;}
+        .stats-text{font-size:.85rem;color:#0ff;}
+        body.light-mode .stats-text{color:#666;}
+        .search-zone{padding:14px 20px;display:flex;gap:10px;flex-wrap:wrap;}
+        .search-bar{flex:1;min-width:220px;display:flex;align-items:center;border:2px solid #0ff;border-radius:8px;padding:0 12px;overflow:hidden;}
+        body.dark-mode .search-bar{background:rgba(10,15,40,.6);}
+        body.light-mode .search-bar{background:#fff;border-color:#ddd;}
+        .search-bar input{background:transparent;border:none;outline:none;color:inherit;padding:9px 4px;width:100%;font-family:'Rajdhani',sans-serif;font-size:.95rem;}
+        .btn-add{background:#00ff88;color:#000;border:none;padding:9px 18px;border-radius:8px;cursor:pointer;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:.95rem;}
+        .container{padding:0 20px 20px;max-width:1400px;margin:0 auto;}
+        .controls{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;padding-top:14px;}
+        .sort-sel{padding:8px 12px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-size:.9rem;cursor:pointer;}
+        body.dark-mode .sort-sel{background:rgba(10,15,40,.6);border:2px solid #0ff;color:#fff;}
+        body.light-mode .sort-sel{background:#fff;border:2px solid #ddd;color:#333;}
+        .view-btns{display:flex;gap:6px;}
+        .view-btn{padding:8px 14px;border:none;border-radius:6px;cursor:pointer;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:.9rem;}
+        body.dark-mode .view-btn{background:#0ff;color:#000;}
+        body.light-mode .view-btn{background:#333;color:#fff;}
+        .view-btn.active{background:#00ff88;color:#000;}
+        .stats-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:18px;padding:14px;border-radius:10px;}
+        body.dark-mode .stats-panel{background:rgba(0,255,255,.05);border:2px solid rgba(0,255,255,.2);}
+        body.light-mode .stats-panel{background:rgba(0,0,0,.04);border:2px solid #e0e0e0;}
+        .stat-item{text-align:center;}
+        .stat-val{font-family:'Orbitron',sans-serif;font-size:1.6rem;font-weight:700;color:#0ff;}
+        body.light-mode .stat-val{color:#333;}
+        .stat-lbl{font-size:.78rem;opacity:.55;margin-top:2px;}
+        .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:18px;}
+        .con-box{perspective:1000px;height:195px;cursor:pointer;}
+        .con-card{width:100%;height:100%;position:relative;transition:transform .4s;border-radius:5px;overflow:hidden;}
+        body.dark-mode .con-card{border:2.5px solid #0ff;}
+        body.light-mode .con-card{border:2px solid #ccc;}
+        .con-box:hover .con-card{transform:rotateY(6deg) rotateX(-5deg);}
+        .con-spine{position:absolute;left:0;width:7px;height:100%;background:linear-gradient(to right,rgba(0,0,0,.5),transparent);z-index:1;}
+        .con-cover{position:absolute;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:3rem;background-size:cover;background-position:center;}
+        body.dark-mode .con-cover{background-color:#051a1a;}
+        body.light-mode .con-cover{background-color:#e8e8e8;}
+        .con-info{position:absolute;bottom:0;width:100%;background:linear-gradient(to top,rgba(0,0,0,.9),transparent);padding:10px;z-index:2;}
+        .con-title{font-size:.72rem;font-weight:700;color:#fff;line-height:1.2;margin-bottom:2px;}
+        .con-sub{font-size:.62rem;color:rgba(255,255,255,.7);}
+        .con-state{font-size:.58rem;color:rgba(255,255,255,.5);}
+        .con-actions{position:absolute;top:5px;right:5px;display:flex;gap:4px;opacity:0;transition:.3s;z-index:10;}
+        .con-box:hover .con-actions{opacity:1;}
+        .con-actions button{background:#0ff;color:#000;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:.72rem;font-weight:700;}
+        .con-actions button:hover{background:#00ff88;}
+        .list-view{display:flex;flex-direction:column;gap:10px;}
+        .list-item{display:flex;gap:14px;align-items:center;padding:14px;border-radius:8px;}
+        body.dark-mode .list-item{background:rgba(10,15,40,.6);border:2px solid rgba(0,255,255,.25);}
+        body.light-mode .list-item{background:#fff;border:2px solid #e0e0e0;}
+        .list-cover{width:72px;height:72px;border-radius:5px;background-size:cover;background-position:center;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.8rem;}
+        body.dark-mode .list-cover{background-color:#051a1a;}
+        body.light-mode .list-cover{background-color:#e8e8e8;}
+        .list-info{flex:1;min-width:0;}
+        .list-title{font-size:1rem;font-weight:700;color:#0ff;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        body.light-mode .list-title{color:#333;}
+        .list-sub{font-size:.85rem;opacity:.7;}
+        .list-meta{font-size:.78rem;opacity:.5;margin-top:2px;}
+        .list-actions{display:flex;gap:6px;flex-shrink:0;}
+        .demo-badge{font-size:.58rem;background:rgba(0,255,255,.12);color:#0ff;border:1px solid rgba(0,255,255,.3);border-radius:3px;padding:1px 5px;margin-left:4px;}
+        .loan-badge{font-size:.62rem;background:rgba(255,170,0,.12);color:#fa0;border:1px solid rgba(255,170,0,.3);border-radius:3px;padding:1px 5px;margin-left:4px;}
+        .empty-msg{opacity:.4;text-align:center;padding:50px;grid-column:1/-1;font-size:1.1rem;}
+        .btn{padding:9px 18px;border:none;border-radius:6px;cursor:pointer;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:.9rem;transition:.2s;}
+        .btn:hover{opacity:.85;}
+        .btn-primary{background:#00ff88;color:#000;}
+        .btn-ghost{border:2px solid rgba(0,255,255,.3);background:transparent;color:#0ff;}
+        body.light-mode .btn-ghost{border-color:#ccc;color:#666;}
+        .btn-danger{background:rgba(0,255,255,.08);color:#0ff;border:2px solid rgba(0,255,255,.2);}
+        .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;}
+        .modal.active{display:flex;}
+        .modal-content{border-radius:10px;padding:22px;max-width:760px;width:100%;margin:auto;position:relative;}
+        body.dark-mode .modal-content{background:#0d1230;border:2px solid #0ff;}
+        body.light-mode .modal-content{background:#fff;border:2px solid #ddd;}
+        .modal-title{font-family:'Orbitron',sans-serif;font-size:1rem;font-weight:700;color:#0ff;margin-bottom:16px;}
+        body.light-mode .modal-title{color:#333;}
+        .close-btn{position:absolute;top:12px;right:12px;background:#0ff;color:#000;border:none;padding:5px 11px;border-radius:5px;cursor:pointer;font-weight:700;}
+        .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+        @media(max-width:520px){.form-grid{grid-template-columns:1fr;}}
+        .form-full{grid-column:1/-1;}
+        .form-group{display:flex;flex-direction:column;gap:5px;}
+        .lbl{font-size:.83rem;font-weight:600;opacity:.75;}
+        .req{color:#0ff;}
+        .input,.sel,.txtarea{padding:9px 12px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-size:.9rem;transition:.3s;width:100%;}
+        body.dark-mode .input,body.dark-mode .sel,body.dark-mode .txtarea{background:#0d1a2e;border:2px solid rgba(0,255,255,.2);color:#fff;}
+        body.dark-mode .sel option{background:#0d1a2e;color:#fff;}
+        body.light-mode .sel option{background:#fff;color:#333;}
+        body.light-mode .input,body.light-mode .sel,body.light-mode .txtarea{background:#f8f8f8;border:2px solid #e0e0e0;color:#333;}
+        .input:focus,.sel:focus,.txtarea:focus{outline:none;}
+        body.dark-mode .input:focus,body.dark-mode .sel:focus,body.dark-mode .txtarea:focus{border-color:#0ff;}
+        .txtarea{min-height:70px;resize:vertical;}
+        .section-sep{grid-column:1/-1;border:none;border-top:1px solid rgba(0,255,255,.15);margin:4px 0;}
+        body.light-mode .section-sep{border-color:#e0e0e0;}
+        .section-label{grid-column:1/-1;font-family:'Orbitron',sans-serif;font-size:.7rem;font-weight:700;color:#0ff;opacity:.65;margin-top:2px;letter-spacing:.08em;}
+        body.light-mode .section-label{color:#666;}
+        .preview{width:100%;height:130px;border-radius:6px;margin-top:8px;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:3rem;}
+        body.dark-mode .preview{background-color:rgba(0,255,255,.04);border:2px dashed rgba(0,255,255,.2);}
+        body.light-mode .preview{background-color:#f0f0f0;border:2px dashed #ddd;}
+        .btn-row{display:flex;gap:10px;margin-top:16px;}
+        .err-msg{padding:10px;border-radius:5px;font-size:.85rem;font-weight:700;margin-top:8px;background:rgba(0,255,255,.08);border:2px solid rgba(0,255,255,.25);color:#0ff;}
+        .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:#00ff88;color:#000;font-weight:700;font-size:.9rem;padding:11px 24px;border-radius:8px;z-index:9999;opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap;font-family:'Rajdhani',sans-serif;}
+        .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+        .toast.error{background:#ff0088;color:#fff;}
+    </style>
+</head>
+<body class="dark-mode">
+    <div class="header">
+        <button class="back-btn" onclick="window.location.href='collectioner.html'">← Retour</button>
+        <div class="page-title">🖥️ CONSOLES</div>
+        <div class="stats-text" id="statsText">0 Consoles</div>
+    </div>
+    <div class="search-zone">
+        <div class="search-bar"><input type="text" id="searchInput" placeholder="Rechercher nom, type, modèle..." oninput="debouncedFilter()"></div>
+        <button class="btn-add" onclick="openAddModal()">+ Ajouter</button>
+    </div>
+    <div class="container">
+        <div class="controls">
+            <select id="sortSel" class="sort-sel" onchange="onSort()">
+                <option value="">Trier par...</option>
+                <option value="title-asc">Nom A-Z</option>
+                <option value="title-desc">Nom Z-A</option>
+                <option value="type-asc">Type A-Z</option>
+                <option value="value-desc">Valeur ↓</option>
+            </select>
+            <div class="view-btns">
+                <button class="view-btn active" onclick="switchView('grid',this)">▦ Grille</button>
+                <button class="view-btn" onclick="switchView('list',this)">☰ Liste</button>
+            </div>
+        </div>
+        <div class="stats-panel">
+            <div class="stat-item"><div class="stat-val" id="stTotal">0</div><div class="stat-lbl">Total</div></div>
+            <div class="stat-item"><div class="stat-val" id="stValue">0€</div><div class="stat-lbl">Valeur</div></div>
+            <div class="stat-item"><div class="stat-val" id="stLoaned">0</div><div class="stat-lbl">Prêtées</div></div>
+        </div>
+        <div class="grid" id="itemGrid"></div>
+        <div class="list-view" id="itemList" style="display:none;"></div>
+    </div>
+
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal()">✕</button>
+            <div class="modal-title" id="modalTitle">Ajouter une Console</div>
+            <div class="form-grid">
+                <div class="section-label">🎮 Identification</div>
+                <div class="form-group form-full"><label class="lbl">Nom <span class="req">*</span></label><input type="text" id="fTitle" class="input" placeholder="Ex: PlayStation 5, Nintendo 64..."></div>
+                <div class="form-group"><label class="lbl">Type / Marque</label>
+                    <select id="fType" class="sel"><option value="">—</option><option>PlayStation</option><option>Xbox</option><option>Nintendo</option><option>Sega</option><option>Atari</option><option>Neo Geo</option><option>PC Engine</option><option>3DO</option><option>Autre</option></select></div>
+                <div class="form-group"><label class="lbl">Modèle / Révision</label><input type="text" id="fModel" class="input" placeholder="Ex: SCPH-1002, FAT, SLIM..."></div>
+                <div class="form-group"><label class="lbl">Région</label>
+                    <select id="fRegion" class="sel"><option value="">—</option><option>PAL (Europe)</option><option>NTSC-U (USA)</option><option>NTSC-J (Japon)</option><option>World</option></select></div>
+                <div class="form-group"><label class="lbl">Couleur</label><input type="text" id="fColor" class="input" placeholder="Ex: Gris, Noir, Blanc..."></div>
+                <div class="form-group"><label class="lbl">Édition</label><input type="text" id="fEdition" class="input" placeholder="Ex: Launch Edition, Bundle..."></div>
+                <div class="form-group"><label class="lbl">Numéro de série</label><input type="text" id="fSerial" class="input" placeholder="Optionnel"></div>
+                <div class="form-group"><label class="lbl">Quantité</label>
+                    <select id="fQuantity" class="sel"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5+</option></select></div>
+                <hr class="section-sep">
+                <div class="section-label">🔧 État</div>
+                <div class="form-group"><label class="lbl">Fonctionnelle <span class="req">*</span></label>
+                    <select id="fFunctional" class="sel"><option value="">—</option><option>Oui</option><option>Non</option><option>Partiellement</option></select></div>
+                <div class="form-group"><label class="lbl">Défauts / Pannes</label><input type="text" id="fDefect" class="input" placeholder="Ex: laser HS, drift manette..."></div>
+                <div class="form-group"><label class="lbl">État console <span class="req">*</span></label>
+                    <select id="fConsoleState" class="sel"><option value="">—</option><option>Neuf</option><option>Excellent</option><option>Bon</option><option>Acceptable</option><option>Usé</option></select></div>
+                <div class="form-group"><label class="lbl">État boîte</label>
+                    <select id="fBoxState" class="sel"><option value="">—</option><option>Neuf</option><option>Excellent</option><option>Bon</option><option>Acceptable</option><option>Usé</option></select></div>
+                <div class="form-group"><label class="lbl">Boîte présente</label>
+                    <select id="fBoxPresent" class="sel"><option value="">—</option><option>Oui</option><option>Non</option></select></div>
+                <div class="form-group"><label class="lbl">Complète (notice, inlays...)</label>
+                    <select id="fComplete" class="sel"><option value="">—</option><option>Oui</option><option>Non</option><option>Partielle</option></select></div>
+                <hr class="section-sep">
+                <div class="section-label">🎮 Accessoires inclus</div>
+                <div class="form-group form-full"><label class="lbl">Accessoires présents</label><input type="text" id="fAccessories" class="input" placeholder="Ex: câble HDMI, alimentation, memory card..."></div>
+                <div class="form-group form-full"><label class="lbl">Manettes</label><input type="text" id="fControllers" class="input" placeholder="Ex: 2x DualShock 4, 1x manette originale..."></div>
+                <hr class="section-sep">
+                <div class="section-label">💰 Financier</div>
+                <div class="form-group"><label class="lbl">Prix payé (€)</label><input type="number" id="fPrice" class="input" step="0.01" min="0"></div>
+                <div class="form-group"><label class="lbl">Valeur estimée (€)</label><input type="number" id="fValue" class="input" step="0.01" min="0"></div>
+                <hr class="section-sep">
+                <div class="section-label">📝 Divers</div>
+                <div class="form-group form-full"><label class="lbl">Prêtée à</label><input type="text" id="fLoan" class="input" placeholder="Nom de la personne"></div>
+                <div class="form-group form-full"><label class="lbl">Notes</label><textarea id="fNotes" class="txtarea" placeholder="Modifications, historique, remarques..."></textarea></div>
+                <div class="form-group form-full">
+                    <label class="lbl">Photo (URL ou upload)</label>
+                    <input type="text" id="fCoverUrl" class="input" placeholder="URL de l'image">
+                    <input type="file" id="fCoverFile" class="input" accept="image/*" onchange="previewFile()" style="margin-top:6px;">
+                    <div id="coverPrev" class="preview">🖥️</div>
+                </div>
+            </div>
+            <div id="modalMsg"></div>
+            <div class="btn-row">
+                <button class="btn btn-primary" id="btnSave" onclick="saveItem()">✓ Ajouter</button>
+                <button class="btn btn-ghost" onclick="closeModal()">Annuler</button>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script>
+    (function(){ document.body.className = localStorage.getItem('darkMode')!=='false' ? 'dark-mode' : 'light-mode'; })();
+    window.addEventListener('storage', e => { if(e.key==='darkMode') location.reload(); });
+    const KEY='consoleCollection';
+    const DEMO=[
+        {id:'co1',title:'PlayStation 5',type:'PlayStation',model:'CFI-1016A',region:'PAL (Europe)',color:'Blanc',edition:'Launch Edition',serial:'',quantity:'1',functional:'Oui',defect:'',consoleState:'Excellent',boxState:'Excellent',boxPresent:'Oui',complete:'Oui',accessories:'Câble HDMI, alimentation',controllers:'1x DualSense',price:499,value:450,loanTo:'',notes:'',cover:''},
+        {id:'co2',title:'Xbox Series X',type:'Xbox',model:'1882',region:'PAL (Europe)',color:'Noir',edition:'',serial:'',quantity:'1',functional:'Oui',defect:'',consoleState:'Bon',boxState:'Bon',boxPresent:'Oui',complete:'Oui',accessories:'Câble HDMI, alimentation',controllers:'1x Xbox Controller',price:499,value:380,loanTo:'',notes:'',cover:''},
+        {id:'co3',title:'Nintendo 64',type:'Nintendo',model:'NUS-001',region:'PAL (Europe)',color:'Gris',edition:'',serial:'',quantity:'1',functional:'Oui',defect:'',consoleState:'Acceptable',boxState:'',boxPresent:'Non',complete:'Non',accessories:'Alimentation',controllers:'1x Manette N64',price:30,value:85,loanTo:'',notes:'Vide-grenier',cover:''}
+    ];
+    let editingId=null,currentView='grid',filterText='',sortVal='',debTimer;
+    function loadUser(){try{return JSON.parse(localStorage.getItem(KEY))||[];}catch{return[];}}
+    function saveUser(list){try{localStorage.setItem(KEY,JSON.stringify(list));}catch{showToast('⚠ Stockage plein',true);}}
+    function getAll(){return[...DEMO,...loadUser()];}
+    function isDemo(id){return id&&id.startsWith('co')&&id.length<=3;}
+    async function loadFromDrive(){const url=localStorage.getItem('driveUrl');if(!url)return;try{const r=await fetch(url);if(!r.ok)return;const data=await r.json();if(Array.isArray(data.consoles))localStorage.setItem(KEY,JSON.stringify(data.consoles));}catch{}}
+    function debouncedFilter(){clearTimeout(debTimer);debTimer=setTimeout(()=>{filterText=document.getElementById('searchInput').value.toLowerCase().trim();render();},200);}
+    function onSort(){sortVal=document.getElementById('sortSel').value;render();}
+    function getVisible(){let items=getAll();if(filterText)items=items.filter(it=>(it.title||'').toLowerCase().includes(filterText)||(it.type||'').toLowerCase().includes(filterText)||(it.model||'').toLowerCase().includes(filterText)||(it.color||'').toLowerCase().includes(filterText));if(sortVal){items=[...items];items.sort((a,b)=>{if(sortVal==='title-asc')return(a.title||'').localeCompare(b.title||'');if(sortVal==='title-desc')return(b.title||'').localeCompare(a.title||'');if(sortVal==='type-asc')return(a.type||'').localeCompare(b.type||'');if(sortVal==='value-desc')return(b.value||0)-(a.value||0);return 0;});}return items;}
+    function render(){const v=getVisible();currentView==='grid'?renderGrid(v):renderList(v);updateStats(v);}
+    function stateEmoji(s){return s==='Oui'?'✅':s==='Non'?'❌':'⚠️';}
+    function actionBtns(id,sm){const demo=isDemo(id);const s=sm?'font-size:.72rem;padding:4px 8px;':'';const dis=demo?` disabled style="opacity:.3;cursor:not-allowed;${s}"`:`style="${s}"`;const eF=demo?'':` onclick="editItem('${id}')"`;const dF=demo?'':` onclick="deleteItem('${id}')"`;return `<button class="btn btn-primary"${eF}${dis}>✏️</button><button class="btn btn-danger"${dF}${dis}>🗑️</button>`;}
+    function renderGrid(items){const g=document.getElementById('itemGrid');if(!items.length){g.innerHTML='<p class="empty-msg">🖥️ Aucune console</p>';return;}const C=['#0ff','#0f8','#fa0','#ff0088','#f60'];g.innerHTML=items.map((v,i)=>{const color=C[i%5];const badge=isDemo(v.id)?'<span class="demo-badge">démo</span>':'';const loan=v.loanTo?'<span class="loan-badge">📦</span>':'';const bg=v.cover?`background-image:url(${v.cover});`:'';const quant=v.quantity>1?` ×${v.quantity}`:'';return `<div class="con-box"><div class="con-card" style="border-color:${color};"><div class="con-spine"></div><div class="con-cover" style="${bg}">${v.cover?'':'🖥️'}</div><div class="con-actions">${actionBtns(v.id,true)}</div><div class="con-info"><div class="con-title">${v.title}${quant}${badge}${loan}</div><div class="con-sub">${v.type||''}${v.region?' • '+v.region.split(' ')[0]:''}</div><div class="con-state">${stateEmoji(v.functional)} ${v.consoleState||''}</div></div></div></div>`;}).join('');}
+    function renderList(items){const l=document.getElementById('itemList');if(!items.length){l.innerHTML='<p class="empty-msg">🖥️ Aucune console</p>';return;}l.innerHTML=items.map(v=>{const badge=isDemo(v.id)?'<span class="demo-badge">démo</span>':'';const loan=v.loanTo?`<span class="loan-badge">📦 ${v.loanTo}</span>`:'';const bg=v.cover?`background-image:url(${v.cover});`:'';const quant=v.quantity>1?` ×${v.quantity}`:'';const ctrl=v.controllers?` • ${v.controllers}`:'';return `<div class="list-item"><div class="list-cover" style="${bg}">${v.cover?'':'🖥️'}</div><div class="list-info"><div class="list-title">${v.title}${quant}${badge}${loan}</div><div class="list-sub">${v.type||'—'}${v.model?' • '+v.model:''}${v.region?' • '+v.region.split(' ')[0]:''}</div><div class="list-meta">${stateEmoji(v.functional)} ${v.consoleState||'?'} • Boîte: ${v.boxPresent||'?'} • Complète: ${v.complete||'?'}${v.value?' • '+v.value+'€':''}${ctrl}</div></div><div class="list-actions">${actionBtns(v.id,false)}</div></div>`;}).join('');}
+    function switchView(mode,btn){currentView=mode;document.getElementById('itemGrid').style.display=mode==='grid'?'grid':'none';document.getElementById('itemList').style.display=mode==='list'?'flex':'none';document.querySelectorAll('.view-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');render();}
+    function updateStats(visible){const all=getAll();document.getElementById('stTotal').textContent=all.length;document.getElementById('stValue').textContent=all.reduce((s,it)=>s+(it.value||0),0).toFixed(0)+'€';document.getElementById('stLoaned').textContent=all.filter(it=>it.loanTo).length;document.getElementById('statsText').textContent=(filterText?`${visible.length}/`:'')+all.length+' Consoles';}
+    function openAddModal(){editingId=null;document.getElementById('modalTitle').textContent='Ajouter une Console';document.getElementById('btnSave').textContent='✓ Ajouter';clearForm();document.getElementById('addModal').classList.add('active');}
+    function closeModal(){document.getElementById('addModal').classList.remove('active');}
+    function clearForm(){['fTitle','fModel','fColor','fEdition','fSerial','fDefect','fAccessories','fControllers','fLoan','fNotes','fCoverUrl'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});['fType','fRegion','fFunctional','fConsoleState','fBoxState','fBoxPresent','fComplete'].forEach(id=>document.getElementById(id).value='');document.getElementById('fQuantity').value='1';document.getElementById('fPrice').value='';document.getElementById('fValue').value='';document.getElementById('fCoverFile').value='';document.getElementById('coverPrev').style.backgroundImage='';document.getElementById('coverPrev').textContent='🖥️';document.getElementById('modalMsg').innerHTML='';}
+    function previewFile(){const f=document.getElementById('fCoverFile').files[0];if(!f)return;const r=new FileReader();r.onload=e=>{document.getElementById('coverPrev').style.backgroundImage=`url(${e.target.result})`;document.getElementById('coverPrev').textContent='';document.getElementById('fCoverUrl').value='';};r.readAsDataURL(f);}
+    function setPreviewUrl(url){document.getElementById('fCoverUrl').value=url;document.getElementById('coverPrev').style.backgroundImage=url?`url(${url})`:'';document.getElementById('coverPrev').textContent=url?'':'🖥️';}
+    function saveItem(){const title=document.getElementById('fTitle').value.trim();const functional=document.getElementById('fFunctional').value;const consoleState=document.getElementById('fConsoleState').value;if(!title){document.getElementById('modalMsg').innerHTML='<div class="err-msg">⚠ Le nom est obligatoire</div>';return;}const coverFile=document.getElementById('fCoverFile').files[0];const coverUrl=document.getElementById('fCoverUrl').value.trim();const doSave=cover=>{const list=loadUser();const existing=editingId?list.find(i=>i.id===editingId):null;const item={id:editingId||('con-'+Date.now()),title,type:document.getElementById('fType').value,model:document.getElementById('fModel').value.trim(),region:document.getElementById('fRegion').value,color:document.getElementById('fColor').value.trim(),edition:document.getElementById('fEdition').value.trim(),serial:document.getElementById('fSerial').value.trim(),quantity:document.getElementById('fQuantity').value,functional,defect:document.getElementById('fDefect').value.trim(),consoleState,boxState:document.getElementById('fBoxState').value,boxPresent:document.getElementById('fBoxPresent').value,complete:document.getElementById('fComplete').value,accessories:document.getElementById('fAccessories').value.trim(),controllers:document.getElementById('fControllers').value.trim(),price:parseFloat(document.getElementById('fPrice').value)||0,value:parseFloat(document.getElementById('fValue').value)||0,loanTo:document.getElementById('fLoan').value.trim(),notes:document.getElementById('fNotes').value.trim(),cover:cover!==undefined?cover:(existing?existing.cover:null)};if(editingId){const idx=list.findIndex(i=>i.id===editingId);if(idx>=0)list[idx]=item;else list.push(item);}else list.push(item);saveUser(list);render();closeModal();showToast(editingId?'✏️ Console modifiée !':'✅ Console ajoutée !');};if(coverFile){const rd=new FileReader();rd.onload=e=>doSave(e.target.result);rd.readAsDataURL(coverFile);}else doSave(coverUrl||undefined);}
+    function editItem(id){const item=loadUser().find(i=>i.id===id);if(!item)return;editingId=id;document.getElementById('modalTitle').textContent='Modifier Console';document.getElementById('btnSave').textContent='✓ Modifier';document.getElementById('fTitle').value=item.title||'';document.getElementById('fType').value=item.type||'';document.getElementById('fModel').value=item.model||'';document.getElementById('fRegion').value=item.region||'';document.getElementById('fColor').value=item.color||'';document.getElementById('fEdition').value=item.edition||'';document.getElementById('fSerial').value=item.serial||'';document.getElementById('fQuantity').value=item.quantity||'1';document.getElementById('fFunctional').value=item.functional||'';document.getElementById('fDefect').value=item.defect||'';document.getElementById('fConsoleState').value=item.consoleState||'';document.getElementById('fBoxState').value=item.boxState||'';document.getElementById('fBoxPresent').value=item.boxPresent||'';document.getElementById('fComplete').value=item.complete||'';document.getElementById('fAccessories').value=item.accessories||'';document.getElementById('fControllers').value=item.controllers||'';document.getElementById('fPrice').value=item.price||'';document.getElementById('fValue').value=item.value||'';document.getElementById('fLoan').value=item.loanTo||'';document.getElementById('fNotes').value=item.notes||'';document.getElementById('fCoverFile').value='';setPreviewUrl(item.cover||'');document.getElementById('modalMsg').innerHTML='';document.getElementById('addModal').classList.add('active');}
+    function deleteItem(id){if(!confirm('Supprimer cette console ?'))return;saveUser(loadUser().filter(i=>i.id!==id));render();showToast('🗑️ Console supprimée');}
+    let toastTimer;
+    function showToast(msg,err=false){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(err?' error':'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2500);}
+    window.addEventListener('load',async()=>{await loadFromDrive();render();});
+    </script>
+</body>
+</html>
