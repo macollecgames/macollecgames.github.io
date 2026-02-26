@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paramètres — Collectioner</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600&display=swap');
+        * { margin:0; padding:0; box-sizing:border-box; }
+        html, body { height:100%; width:100%; }
+        body { font-family:'Rajdhani',sans-serif; }
+        body.dark-mode { background: linear-gradient(135deg, #0a0e27 0%, #1a0033 50%, #0f0a25 100%); color: #fff; }
+        body.light-mode { background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 50%, #f0f0f0 100%); color: #333; }
+        .header { padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid; }
+        body.dark-mode .header { background: rgba(10,15,40,.95); border-color: #0ff; }
+        body.light-mode .header { background: rgba(255,255,255,.95); border-color: #ddd; }
+        .back-btn { border: none; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-weight: 700; font-family:'Rajdhani',sans-serif; font-size:1rem; transition:.3s; }
+        body.dark-mode .back-btn { background: #0ff; color: #000; }
+        body.light-mode .back-btn { background: #333; color: #fff; }
+        .back-btn:hover { opacity:.8; }
+        .title { font-family:'Orbitron',sans-serif; font-size: 1.4rem; font-weight: 900; letter-spacing:.1em; }
+        body.dark-mode .title { color: #0ff; text-shadow: 0 0 15px rgba(0,255,255,.5); }
+        body.light-mode .title { color: #333; }
+        .container { padding: 20px; max-width: 650px; margin: 0 auto; }
+        .section { border-radius: 10px; padding: 20px; margin-bottom: 16px; transition:.3s; }
+        body.dark-mode .section { background: rgba(10,15,40,.6); border: 2px solid rgba(0,255,255,.2); }
+        body.light-mode .section { background: rgba(255,255,255,.9); border: 2px solid #e0e0e0; }
+        body.dark-mode .section:hover { border-color: rgba(0,255,255,.5); }
+        body.light-mode .section:hover { border-color: #aaa; }
+        .section-title { font-family:'Orbitron',sans-serif; font-size: .9rem; font-weight: 700; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid; display: flex; align-items: center; gap: 8px; }
+        body.dark-mode .section-title { color: #0ff; border-color: rgba(0,255,255,.15); }
+        body.light-mode .section-title { color: #333; border-color: #ddd; }
+        .field { margin-bottom: 14px; }
+        .field label { display: block; font-size: .9rem; font-weight: 600; margin-bottom: 6px; opacity: .85; }
+        .field small { display: block; font-size: .78rem; opacity: .5; margin-top: 5px; line-height:1.5; }
+        body.dark-mode .field small a { color: #0ff; }
+        body.light-mode .field small a { color: #0077cc; }
+        .input { width: 100%; padding: 10px 14px; border-radius: 7px; font-size: .9rem; font-family:'Rajdhani',sans-serif; transition:.3s; }
+        body.dark-mode .input { background: rgba(0,0,0,.35); border: 2px solid rgba(0,255,255,.15); color: #fff; }
+        body.dark-mode select option { background: #0d1a2e; color: #fff; }
+        body.light-mode select option { background: #fff; color: #333; }
+        body.light-mode .input { background: #f8f8f8; border: 2px solid #ddd; color: #333; }
+        .input:focus { outline: none; }
+        body.dark-mode .input:focus { border-color: #0ff; box-shadow: 0 0 8px rgba(0,255,255,.2); }
+        body.light-mode .input:focus { border-color: #999; }
+        .token-row { display: flex; gap: 8px; }
+        .token-row .input { flex:1; font-family: monospace; font-size: .82rem; }
+        .vis-btn { background: none; border: 2px solid; border-radius: 6px; padding: 8px 12px; cursor: pointer; font-size: .9rem; transition:.3s; flex-shrink:0; }
+        body.dark-mode .vis-btn { border-color: rgba(0,255,255,.25); color: #0ff; }
+        body.light-mode .vis-btn { border-color: #ccc; color: #666; }
+        .vis-btn:hover { opacity:.7; }
+        .badge { display: inline-flex; align-items: center; gap: 4px; font-size: .75rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; margin-top: 6px; }
+        .badge-ok { background: rgba(0,255,136,.12); color: #0f8; border: 1px solid #0f8; }
+        .badge-empty { background: rgba(255,170,0,.1); color: #fa0; border: 1px solid #fa0; }
+        .setting-row { display: flex; align-items: center; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid; gap:12px; }
+        body.dark-mode .setting-row { border-color: rgba(255,255,255,.05); }
+        body.light-mode .setting-row { border-color: #f0f0f0; }
+        .setting-row:last-child { border-bottom: none; }
+        .setting-label { font-weight: 600; font-size: .95rem; }
+        .setting-desc { font-size: .78rem; opacity: .5; margin-top: 2px; }
+        .toggle { position: relative; width: 52px; height: 28px; flex-shrink:0; }
+        .toggle input { display: none; }
+        .toggle-track { position: absolute; inset: 0; border-radius: 28px; cursor: pointer; transition:.3s; }
+        body.dark-mode .toggle-track { background: #333; }
+        body.light-mode .toggle-track { background: #ddd; }
+        .toggle input:checked + .toggle-track { background: #00ff88; }
+        .toggle-thumb { position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: white; transition:.3s; pointer-events:none; box-shadow:0 1px 4px rgba(0,0,0,.3); }
+        .toggle input:checked + .toggle-track + .toggle-thumb { transform: translateX(24px); }
+        .btn-row { display: flex; gap: 10px; margin-top: 14px; flex-wrap:wrap; }
+        .btn { padding: 10px 18px; border: none; border-radius: 7px; cursor: pointer; font-weight: 700; font-size: .9rem; font-family:'Rajdhani',sans-serif; transition:.3s; flex:1; min-width:120px; }
+        .btn:hover { opacity:.85; transform:translateY(-1px); }
+        .btn:active { transform:translateY(0); }
+        .btn-primary { background: #00ff88; color: #000; }
+        .btn-cyan { background: #0ff; color: #000; }
+        body.light-mode .btn-cyan { background: #333; color: #fff; }
+        .btn-ghost { border: 2px solid; }
+        body.dark-mode .btn-ghost { background: transparent; border-color: rgba(0,255,255,.25); color: #0ff; }
+        body.light-mode .btn-ghost { background: transparent; border-color: #ccc; color: #555; }
+        .btn-danger { background: rgba(255,0,136,.12); color: #ff0088; border: 2px solid rgba(255,0,136,.25); }
+
+        /* Statut sync Gist */
+        .gist-status-bar { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:7px; margin-top:12px; font-size:.85rem; font-weight:600; }
+        body.dark-mode .gist-status-bar { background:rgba(0,255,136,.05); border:1px solid rgba(0,255,136,.2); }
+        body.light-mode .gist-status-bar { background:#f5fff8; border:1px solid #b8f0cc; }
+        .gist-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+        .gist-dot.ok { background:#0f8; }
+        .gist-dot.err { background:#ff0088; }
+        .gist-dot.loading { background:#fa0; animation:pulse .8s ease-in-out infinite; }
+        .gist-dot.idle { background:#666; }
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.2}}
+        .gist-txt.ok { color:#0f8; }
+        .gist-txt.err { color:#ff0088; }
+        .gist-txt.loading { color:#fa0; }
+        .gist-txt.idle { color:#888; }
+
+        /* GUIDE */
+        .guide-overlay { display:none; position:fixed; inset:0; z-index:200; background:rgba(0,0,0,.85); align-items:center; justify-content:center; padding:20px; overflow-y:auto; }
+        .guide-overlay.open { display:flex; }
+        .guide-box { max-width:600px; width:100%; border-radius:12px; padding:28px; position:relative; max-height:90vh; overflow-y:auto; }
+        body.dark-mode .guide-box { background:#0d1230; border:2px solid #0ff; }
+        body.light-mode .guide-box { background:#fff; border:2px solid #ddd; }
+        .guide-close { position:absolute; top:12px; right:12px; background:#ff0088; color:#fff; border:none; border-radius:6px; width:32px; height:32px; cursor:pointer; font-size:1.1rem; font-weight:bold; }
+        .guide-box h2 { font-family:'Orbitron',sans-serif; font-size:1rem; margin-bottom:20px; }
+        body.dark-mode .guide-box h2 { color:#0ff; }
+        .guide-step { margin-bottom:22px; }
+        .guide-step h3 { font-size:.95rem; font-weight:700; margin-bottom:10px; padding:6px 12px; border-radius:5px; }
+        body.dark-mode .guide-step h3 { background:rgba(0,255,255,.08); color:#0ff; }
+        body.light-mode .guide-step h3 { background:#f0f0f0; color:#333; }
+        .guide-step p,.guide-step li { font-size:.88rem; line-height:1.65; opacity:.85; }
+        .guide-step ol,.guide-step ul { padding-left:18px; }
+        .guide-step li { margin-bottom:5px; }
+        .code-block { font-family:monospace; font-size:.8rem; padding:8px 12px; border-radius:5px; display:block; margin:6px 0; word-break:break-all; }
+        body.dark-mode .code-block { background:rgba(0,0,0,.5); color:#0f8; border:1px solid rgba(0,255,136,.15); }
+        body.light-mode .code-block { background:#f5f5f5; color:#0a0; border:1px solid #ddd; }
+        .tip { padding:10px 14px; border-radius:7px; font-size:.83rem; margin-top:8px; line-height:1.5; }
+        body.dark-mode .tip { background:rgba(255,170,0,.07); border-left:3px solid #fa0; color:#fa0; }
+        body.light-mode .tip { background:#fffbf0; border-left:3px solid #fa0; color:#a07000; }
+        .toast { position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px); background:#00ff88; color:#000; font-weight:700; font-size:.9rem; padding:11px 24px; border-radius:8px; z-index:9999; opacity:0; transition:all .25s; pointer-events:none; white-space:nowrap; font-family:'Rajdhani',sans-serif; }
+        .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+        .toast.error { background:#ff0088; color:#fff; }
+    </style>
+</head>
+<body class="dark-mode">
+    <div class="header">
+        <button class="back-btn" onclick="window.location.href='collectioner.html'">← Retour</button>
+        <div class="title">⚙ PARAMÈTRES</div>
+        <button onclick="openGuide()" style="background:rgba(0,255,255,.1);color:#0ff;border:2px solid rgba(0,255,255,.25);border-radius:6px;padding:7px 14px;cursor:pointer;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:.85rem;">❓ Aide</button>
+    </div>
+
+    <div class="container">
+
+        <!-- APPARENCE -->
+        <div class="section">
+            <div class="section-title">🎨 Apparence</div>
+            <div class="setting-row">
+                <div>
+                    <div class="setting-label">Mode sombre</div>
+                    <div class="setting-desc">Thème cyberpunk sombre / clair</div>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" id="darkToggle" onchange="toggleDark()">
+                    <span class="toggle-track"></span>
+                    <span class="toggle-thumb"></span>
+                </label>
+            </div>
+        </div>
+
+        <!-- GITHUB GIST -->
+        <div class="section">
+            <div class="section-title">☁️ GitHub Gist — Synchronisation</div>
+
+            <div class="field">
+                <label>Gist ID</label>
+                <input type="text" id="gistId" class="input" placeholder="ex: a25299889ebf50b8408d25457dff4e5d">
+                <small>L'identifiant de ton Gist — visible dans l'URL sur gist.github.com</small>
+                <div id="gistIdStatus"></div>
+            </div>
+
+            <div class="field" style="margin-top:14px;">
+                <label>Token GitHub <span style="color:#fa0;">★</span> <span style="opacity:.45;font-weight:400;font-size:.82rem;">(obligatoire pour l'écriture)</span></label>
+                <div class="token-row">
+                    <input type="password" id="githubToken" class="input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+                    <button class="vis-btn" onclick="toggleVis('githubToken',this)">👁</button>
+                </div>
+                <small>Token avec scope <strong>gist</strong> uniquement. <a href="https://github.com/settings/tokens" target="_blank">Créer un token →</a></small>
+                <div id="githubTokenStatus"></div>
+            </div>
+
+            <div class="gist-status-bar" id="gistStatusBar" style="display:none;">
+                <div class="gist-dot idle" id="gistDot"></div>
+                <span class="gist-txt idle" id="gistTxt">—</span>
+            </div>
+
+            <div class="btn-row">
+                <button class="btn btn-cyan" onclick="saveGist()">💾 Sauvegarder</button>
+                <button class="btn btn-ghost" onclick="testGist()">🔗 Tester la connexion</button>
+            </div>
+        </div>
+
+        <!-- TOKENS API -->
+        <div class="section">
+            <div class="section-title">🔑 Tokens API — Pochettes</div>
+            <div class="field">
+                <label>Token Discogs <span style="opacity:.45;font-weight:400;font-size:.82rem;">(optionnel — fallback vinyles/CDs)</span></label>
+                <div class="token-row">
+                    <input type="password" id="discogsToken" class="input" placeholder="Ton token Discogs">
+                    <button class="vis-btn" onclick="toggleVis('discogsToken',this)">👁</button>
+                </div>
+                <small>Sans token : MusicBrainz est utilisé (gratuit, 0 token). Discogs = fallback si non trouvé. <a href="https://www.discogs.com/settings/developers" target="_blank">Obtenir →</a></small>
+                <div id="discogsStatus"></div>
+            </div>
+            <div class="field" style="margin-top:16px;">
+                <label>Token TMDB <span style="color:#fa0;">★</span> <span style="opacity:.45;font-weight:400;font-size:.82rem;">(obligatoire pour DVDs)</span></label>
+                <div class="token-row">
+                    <input type="password" id="tmdbToken" class="input" placeholder="API Read Access Token (Bearer)">
+                    <button class="vis-btn" onclick="toggleVis('tmdbToken',this)">👁</button>
+                </div>
+                <small>Gratuit — 40 req/10s. Nécessaire pour la recherche et pochettes DVDs. <a href="https://www.themoviedb.org/settings/api" target="_blank">Obtenir →</a></small>
+                <div id="tmdbStatus"></div>
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-cyan" onclick="saveTokens()">💾 Sauvegarder</button>
+            </div>
+        </div>
+
+        <!-- INFOS -->
+        <div class="section">
+            <div class="section-title">ℹ️ Informations</div>
+            <div class="setting-row"><div><div class="setting-label">Version</div><div class="setting-desc">Collectioner v3.0</div></div></div>
+            <div class="setting-row"><div><div class="setting-label">Collection</div><div class="setting-desc" id="collectionsInfo">—</div></div></div>
+            <div class="setting-row"><div><div class="setting-label">Sync</div><div class="setting-desc">GitHub Gist (lecture + écriture)</div></div></div>
+            <div class="setting-row"><div><div class="setting-label">APIs</div><div class="setting-desc">MusicBrainz (0 token) • Discogs (fallback) • TMDB (DVDs)</div></div></div>
+        </div>
+    </div>
+
+    <!-- GUIDE -->
+    <div class="guide-overlay" id="guideOverlay">
+        <div class="guide-box">
+            <button class="guide-close" onclick="closeGuide()">✕</button>
+            <h2>📖 Guide de configuration Collectioner</h2>
+
+            <div class="guide-step">
+                <h3>☁️ Étape 1 — Créer le Gist</h3>
+                <ol>
+                    <li>Va sur <strong>gist.github.com</strong></li>
+                    <li>Nom du fichier : <strong>collection.json</strong></li>
+                    <li>Colle ce contenu :</li>
+                </ol>
+                <span class="code-block">{"vinyls":[],"cds":[],"dvds":[],"consoles":[],"jeux":[]}</span>
+                <ol start="4">
+                    <li>Clique <strong>Créer un Gist secret</strong></li>
+                    <li>Copie l'ID dans l'URL (longue suite de caractères)</li>
+                </ol>
+                <div class="tip">💡 Secret = pas indexé par Google, mais accessible si quelqu'un a l'URL. Suffisant pour un usage personnel.</div>
+            </div>
+
+            <div class="guide-step">
+                <h3>🔑 Étape 2 — Créer le Token GitHub</h3>
+                <ol>
+                    <li>Va sur <strong>github.com/settings/tokens</strong></li>
+                    <li>Clique <strong>Generate new token (classic)</strong></li>
+                    <li>Note : <strong>Collectioner</strong></li>
+                    <li>Expiration : <strong>Aucune</strong></li>
+                    <li>Coche uniquement <strong>gist</strong></li>
+                    <li>Clique <strong>Generate token</strong> et copie-le immédiatement</li>
+                </ol>
+                <div class="tip">⚠ GitHub ne te montre le token qu'une seule fois ! Note-le dans un endroit sûr.</div>
+            </div>
+
+            <div class="guide-step">
+                <h3>🎵 Étape 3 — Token Discogs (optionnel)</h3>
+                <ol>
+                    <li>Va sur <strong>discogs.com</strong> → Paramètres → Développeurs</li>
+                    <li>Clique <strong>Generate Token</strong> → copie</li>
+                </ol>
+                <div class="tip">💡 Facultatif — MusicBrainz est utilisé en priorité (gratuit, sans token).</div>
+            </div>
+
+            <div class="guide-step">
+                <h3>🎬 Étape 4 — Token TMDB (pour DVDs)</h3>
+                <ol>
+                    <li>Va sur <strong>themoviedb.org</strong> → Paramètres → API</li>
+                    <li>Copie le <strong>Jeton d'accès en lecture API (v4)</strong></li>
+                </ol>
+                <div class="tip">💡 Gratuit, 40 req/10s. Nécessaire pour les pochettes DVD.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+    (function(){ document.body.className = localStorage.getItem('darkMode')!=='false' ? 'dark-mode' : 'light-mode'; })();
+
+    function toggleDark(){
+        const v = document.getElementById('darkToggle').checked;
+        localStorage.setItem('darkMode', v);
+        document.body.className = v ? 'dark-mode' : 'light-mode';
+    }
+
+    function toggleVis(id, btn){
+        const el = document.getElementById(id);
+        el.type = el.type==='password' ? 'text' : 'password';
+        btn.textContent = el.type==='text' ? '🙈' : '👁';
+    }
+
+    function setBadge(elId, val, okLabel='Configuré', emptyLabel='Non configuré'){
+        const el = document.getElementById(elId);
+        if(!el) return;
+        el.innerHTML = val
+            ? `<span class="badge badge-ok">✓ ${okLabel}</span>`
+            : `<span class="badge badge-empty">○ ${emptyLabel}</span>`;
+    }
+
+    function setGistState(state, txt){
+        const bar = document.getElementById('gistStatusBar');
+        const dot = document.getElementById('gistDot');
+        const t = document.getElementById('gistTxt');
+        bar.style.display = 'flex';
+        dot.className = 'gist-dot ' + state;
+        t.className = 'gist-txt ' + state;
+        t.textContent = txt;
+    }
+
+    function loadAll(){
+        const gistId = localStorage.getItem('gistId')||'';
+        const githubToken = localStorage.getItem('githubToken')||'';
+        const discogs = localStorage.getItem('discogsToken')||'';
+        const tmdb = localStorage.getItem('tmdbToken')||'';
+
+        document.getElementById('gistId').value = gistId;
+        document.getElementById('githubToken').value = githubToken;
+        document.getElementById('discogsToken').value = discogs;
+        document.getElementById('tmdbToken').value = tmdb;
+
+        setBadge('gistIdStatus', gistId, 'Gist ID configuré', 'Gist ID manquant');
+        setBadge('githubTokenStatus', githubToken, 'Token configuré', 'Token manquant');
+        setBadge('discogsStatus', discogs);
+        setBadge('tmdbStatus', tmdb);
+
+        if(gistId && githubToken){
+            setGistState('ok', '✓ Gist configuré — prêt à synchroniser');
+        } else if(gistId || githubToken){
+            setGistState('idle', 'Configuration incomplète — Gist ID + Token requis');
+        }
+
+        // Infos collection
+        try {
+            const v = JSON.parse(localStorage.getItem('vinylCollection')||'[]').length;
+            const c = JSON.parse(localStorage.getItem('cdCollection')||'[]').length;
+            const d = JSON.parse(localStorage.getItem('dvdCollection')||'[]').length;
+            const co = JSON.parse(localStorage.getItem('consoleCollection')||'[]').length;
+            const j = JSON.parse(localStorage.getItem('jeuxCollection')||'[]').length;
+            const total = v+c+d+co+j;
+            document.getElementById('collectionsInfo').textContent =
+                `${total} éléments — ${v} vinyles • ${c} CDs • ${d} DVDs • ${co} consoles • ${j} jeux`;
+        } catch{}
+    }
+
+    function saveGist(){
+        const gistId = document.getElementById('gistId').value.trim();
+        const githubToken = document.getElementById('githubToken').value.trim();
+        if(gistId) localStorage.setItem('gistId', gistId); else localStorage.removeItem('gistId');
+        if(githubToken) localStorage.setItem('githubToken', githubToken); else localStorage.removeItem('githubToken');
+        setBadge('gistIdStatus', gistId, 'Gist ID configuré', 'Gist ID manquant');
+        setBadge('githubTokenStatus', githubToken, 'Token configuré', 'Token manquant');
+        if(gistId && githubToken){
+            setGistState('ok', '✓ Gist configuré — prêt à synchroniser');
+        }
+        showToast('✅ Configuration Gist sauvegardée !');
+    }
+
+    async function testGist(){
+        const gistId = document.getElementById('gistId').value.trim() || localStorage.getItem('gistId');
+        const token = document.getElementById('githubToken').value.trim() || localStorage.getItem('githubToken');
+        if(!gistId){ showToast('⚠ Gist ID manquant', true); return; }
+        if(!token){ showToast('⚠ Token GitHub manquant', true); return; }
+        setGistState('loading', 'Test en cours...');
+        try {
+            const r = await fetch(`https://api.github.com/gists/${gistId}`, {
+                headers: { 'Authorization': `token ${token}` }
+            });
+            if(!r.ok) throw new Error('HTTP ' + r.status + ' — Token ou Gist ID invalide');
+            const data = await r.json();
+            const filename = Object.keys(data.files)[0];
+            setGistState('ok', `✓ Connexion OK — fichier : ${filename}`);
+            showToast('✅ Gist accessible et valide !');
+        } catch(e){
+            setGistState('err', '✗ ' + e.message);
+            showToast('❌ ' + e.message, true);
+        }
+    }
+
+    function saveTokens(){
+        const d = document.getElementById('discogsToken').value.trim();
+        const t = document.getElementById('tmdbToken').value.trim();
+        if(d) localStorage.setItem('discogsToken', d); else localStorage.removeItem('discogsToken');
+        if(t) localStorage.setItem('tmdbToken', t); else localStorage.removeItem('tmdbToken');
+        setBadge('discogsStatus', d);
+        setBadge('tmdbStatus', t);
+        showToast('✅ Tokens sauvegardés !');
+    }
+
+    function openGuide(){ document.getElementById('guideOverlay').classList.add('open'); }
+    function closeGuide(){ document.getElementById('guideOverlay').classList.remove('open'); }
+    document.getElementById('guideOverlay').addEventListener('click', e=>{
+        if(e.target===document.getElementById('guideOverlay')) closeGuide();
+    });
+
+    let toastTimer;
+    function showToast(msg, err=false){
+        const t=document.getElementById('toast');
+        t.textContent=msg; t.className='toast show'+(err?' error':'');
+        clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2800);
+    }
+
+    window.addEventListener('load',()=>{
+        document.getElementById('darkToggle').checked = localStorage.getItem('darkMode')!=='false';
+        loadAll();
+    });
+    window.addEventListener('storage', e=>{ if(e.key==='darkMode') location.reload(); });
+    </script>
+</body>
+</html>
