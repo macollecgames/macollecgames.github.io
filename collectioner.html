@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collectioner</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap');
+        *{margin:0;padding:0;box-sizing:border-box}html,body{height:100%;width:100%}
+        body{background:linear-gradient(135deg,#0a0e27 0%,#1a0033 50%,#0f0a25 100%);font-family:'Rajdhani',sans-serif;color:#fff;overflow-y:auto;min-height:100vh;}
+        body::before{content:'';position:fixed;top:0;left:0;width:200%;height:200%;background:linear-gradient(45deg,transparent 48%,rgba(0,255,255,.015) 49%,rgba(0,255,255,.015) 51%,transparent 52%),linear-gradient(-45deg,transparent 48%,rgba(255,0,136,.015) 49%,rgba(255,0,136,.015) 51%,transparent 52%);background-size:100px 100px;pointer-events:none;z-index:1}
+        .wrap{min-height:100vh;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:10px 20px 8px;position:relative;z-index:10;gap:6px;}
+        @supports(height:100dvh){.wrap{min-height:100dvh}}
+        .header{text-align:center;flex-shrink:0;padding-top:6px}
+        .title{font-family:'Orbitron',sans-serif;font-size:2.3rem;font-weight:900;letter-spacing:.15em;color:#fff;text-shadow:0 0 20px rgba(0,255,255,.8),0 0 40px rgba(0,255,255,.5);margin-bottom:4px;filter:brightness(1.3)}
+        .divider{height:1.5px;background:linear-gradient(90deg,transparent,#ff0088,transparent);margin:4px auto;width:80px}
+        .subtitle{font-size:.68rem;color:#ff0088;letter-spacing:.12em;font-weight:700;text-shadow:0 0 10px rgba(255,0,136,.5)}
+        .sync-bar{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:7px;font-size:.7rem;}
+        .sync-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:background .4s;}
+        .sync-dot.ok{background:#0f8;}
+        .sync-dot.loading{background:#fa0;animation:pulse .8s ease-in-out infinite;}
+        .sync-dot.err{background:#ff0088;}
+        .sync-dot.idle{background:#666;}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.2}}
+        .sync-txt{transition:color .4s;}
+        .sync-txt.ok{color:#0f8;opacity:.8;}
+        .sync-txt.loading{color:#fa0;opacity:.9;}
+        .sync-txt.err{color:#ff0088;opacity:.8;}
+        .sync-txt.idle{color:#888;}
+        .categories{display:flex;flex-direction:column;gap:5px;width:100%;max-width:640px;flex:1;justify-content:center;max-height:calc(100vh - 140px)}
+        .cat-box{display:flex;align-items:center;gap:15px;padding:9px 24px;background:rgba(10,15,40,.6);border:2.5px solid;border-radius:10px;cursor:pointer;transition:all .3s;position:relative;overflow:hidden;animation:slideIn .4s ease-out both}
+        .cat-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);border-radius:10px 10px 0 0}
+        .cat-box:nth-child(1){animation-delay:0s}.cat-box:nth-child(2){animation-delay:.06s}.cat-box:nth-child(3){animation-delay:.12s}.cat-box:nth-child(4){animation-delay:.18s}.cat-box:nth-child(5){animation-delay:.24s}.cat-box:nth-child(6){animation-delay:.3s}
+        .cat-box:hover{transform:scale(1.01)}
+        .box-cyan{border-color:#0ff}.box-cyan:hover{box-shadow:0 0 20px rgba(0,255,255,.5),0 0 40px rgba(0,255,255,.25),inset 0 0 20px rgba(0,255,255,.1)}.box-cyan .lbl{color:#0ff;text-shadow:0 0 15px rgba(0,255,255,.7)}
+        .box-pink{border-color:#ff0088}.box-pink:hover{box-shadow:0 0 20px rgba(255,0,136,.5),0 0 40px rgba(255,0,136,.25),inset 0 0 20px rgba(255,0,136,.1)}.box-pink .lbl{color:#ff0088;text-shadow:0 0 15px rgba(255,0,136,.7)}
+        .box-yellow{border-color:#fa0}.box-yellow:hover{box-shadow:0 0 20px rgba(255,170,0,.5),0 0 40px rgba(255,170,0,.25),inset 0 0 20px rgba(255,170,0,.1)}.box-yellow .lbl{color:#fa0;text-shadow:0 0 15px rgba(255,170,0,.7)}
+        .box-orange{border-color:#f60}.box-orange:hover{box-shadow:0 0 20px rgba(255,102,0,.5),0 0 40px rgba(255,102,0,.25),inset 0 0 20px rgba(255,102,0,.1)}.box-orange .lbl{color:#f60;text-shadow:0 0 15px rgba(255,102,0,.7)}
+        .box-purple{border-color:#a855f7}.box-purple:hover{box-shadow:0 0 20px rgba(168,85,247,.5),0 0 40px rgba(168,85,247,.25),inset 0 0 20px rgba(168,85,247,.1)}.box-purple .lbl{color:#a855f7;text-shadow:0 0 15px rgba(168,85,247,.7)}
+        .icon{font-size:2rem;flex-shrink:0;transition:transform .3s;filter:drop-shadow(0 0 8px currentColor)}
+        .cat-box:hover .icon{transform:scale(1.15)}
+        .lbl{font-size:1.35rem;font-weight:700;flex-grow:1;letter-spacing:.05em}
+        .arrow{font-size:1.1rem;opacity:0;transition:all .3s}
+        .cat-box:hover .arrow{opacity:1}
+        .soon-badge{opacity:.6;font-size:.8rem!important}
+        .count-badge{font-family:'Orbitron',sans-serif;font-size:.62rem;font-weight:700;padding:2px 8px;border-radius:12px;background:rgba(255,255,255,.08);opacity:.7;}
+        .footer{display:flex;gap:12px;align-items:center;padding-bottom:4px;flex-shrink:0;}
+        .btn-settings{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);padding:8px 18px;border-radius:20px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:.85rem;font-weight:600;transition:.3s;letter-spacing:.05em;}
+        .btn-settings:hover{background:rgba(255,255,255,.12);color:#fff;}
+        @keyframes slideIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+        .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(10,15,40,.95);border:2px solid #ff0088;border-radius:10px;padding:12px 24px;color:#ff0088;font-weight:700;font-size:.9rem;z-index:999;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;letter-spacing:.05em;font-family:'Rajdhani',sans-serif;}
+        .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+        @media(max-width:768px){.title{font-size:1.9rem}.cat-box{padding:11px 18px;gap:12px}.icon{font-size:1.7rem}.lbl{font-size:1.1rem}}
+        @media(max-width:480px){.wrap{padding:8px 14px 2px}.title{font-size:1.4rem}.divider{width:60px}.subtitle{font-size:.62rem}.categories{gap:5px}.cat-box{padding:9px 14px;gap:10px}.icon{font-size:1.45rem}.lbl{font-size:.95rem}}
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="header">
+            <h1 class="title">COLLECTIONER</h1>
+            <div class="divider"></div>
+            <p class="subtitle">GÈRE TA COLLECTION</p>
+            <div class="sync-bar">
+                <div class="sync-dot idle" id="syncDot"></div>
+                <span class="sync-txt idle" id="syncTxt">Chargement...</span>
+            </div>
+        </div>
+
+        <div class="categories">
+            <div class="cat-box box-cyan" onclick="go('consoles.html')">
+                <div class="icon">🖥️</div>
+                <div class="lbl">Consoles</div>
+                <div class="count-badge" id="cnt-consoles"></div>
+                <div class="arrow">→</div>
+            </div>
+            <div class="cat-box box-pink" onclick="go('accessoires.html')">
+                <div class="icon">🎮</div>
+                <div class="lbl">Accessoires</div>
+                <div class="arrow">→</div>
+            </div>
+            <div class="cat-box box-purple" onclick="go('jeux.html')">
+                <div class="icon">💾</div>
+                <div class="lbl">Jeux</div>
+                <div class="arrow">→</div>
+            </div>
+            <div class="cat-box box-pink" onclick="go('vinyl.html')">
+                <div class="icon">📀</div>
+                <div class="lbl">Vinyles</div>
+                <div class="count-badge" id="cnt-vinyls"></div>
+                <div class="arrow">→</div>
+            </div>
+            <div class="cat-box box-yellow" onclick="go('dvds.html')">
+                <div class="icon">🎬</div>
+                <div class="lbl">DVDs</div>
+                <div class="count-badge" id="cnt-dvds"></div>
+                <div class="arrow">→</div>
+            </div>
+            <div class="cat-box box-orange" onclick="go('cds.html')">
+                <div class="icon">💿</div>
+                <div class="lbl">CDs</div>
+                <div class="count-badge" id="cnt-cds"></div>
+                <div class="arrow">→</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <button class="btn-settings" onclick="go('settings.html')">⚙ Paramètres</button>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="gist.js"></script>
+    <script>
+    function go(url){ window.location.href=url; }
+
+    function showSoon(el){
+        el.style.opacity='.4';
+        setTimeout(()=>el.style.opacity='1',150);
+        const label=el.querySelector('.lbl').textContent;
+        showToast('⏳ '+label+' — Bientôt disponible !');
+    }
+
+    function setSyncState(state, txt){
+        const dot=document.getElementById('syncDot');
+        const stxt=document.getElementById('syncTxt');
+        dot.className='sync-dot '+state;
+        stxt.className='sync-txt '+state;
+        stxt.textContent=txt;
+    }
+
+    function updateCounts(){
+        const map={
+            'cnt-vinyls': 'vinylCollection',
+            'cnt-cds': 'cdCollection',
+            'cnt-dvds': 'dvdCollection',
+            'cnt-consoles': 'consoleCollection'
+        };
+        Object.entries(map).forEach(([elId,key])=>{
+            try{
+                const data=JSON.parse(localStorage.getItem(key)||'[]');
+                const el=document.getElementById(elId);
+                if(el) el.textContent=data.length>0?data.length:'';
+            }catch{}
+        });
+    }
+
+    let toastTimer;
+    function showToast(msg){
+        const t=document.getElementById('toast');
+        t.textContent=msg; t.classList.add('show');
+        clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2500);
+    }
+
+    // Wrapper autour de loadFromGist() de gist.js
+    // pour mettre à jour la sync-bar et les compteurs après chargement
+    async function initSync(){
+        const gistId=localStorage.getItem('gistId');
+        const token=localStorage.getItem('githubToken');
+        if(!gistId || !token){
+            setSyncState('idle','Gist non configuré — voir Paramètres');
+            return;
+        }
+        setSyncState('loading','Synchronisation Gist...');
+        try{
+            await loadFromGist(); // fonction de gist.js
+            // Calcule le total depuis le localStorage mis à jour
+            const total=Object.keys(GIST_KEYS).reduce((s,k)=>{
+                try{ return s+JSON.parse(localStorage.getItem(k)||'[]').length; }catch{ return s; }
+            },0);
+            setSyncState('ok',`✓ Synchronisé — ${total} éléments`);
+        }catch(e){
+            setSyncState('err','Erreur : '+e.message);
+        }
+        updateCounts();
+    }
+
+    window.addEventListener('load',()=>{
+        updateCounts();
+        initSync();
+    });
+    </script>
+</body>
+</html>
