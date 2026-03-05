@@ -1,0 +1,1587 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collectioner — Jeux</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap');
+        *{margin:0;padding:0;box-sizing:border-box}
+        html,body{height:100%;width:100%}
+        body{
+            background:linear-gradient(135deg,#0a0e27 0%,#1a0033 50%,#0f0a25 100%);
+            font-family:'Rajdhani',sans-serif;color:#fff;min-height:100vh;
+        }
+        body::before{
+            content:'';position:fixed;top:0;left:0;width:200%;height:200%;
+            background:linear-gradient(45deg,transparent 48%,rgba(0,255,255,.015) 49%,rgba(0,255,255,.015) 51%,transparent 52%),
+                        linear-gradient(-45deg,transparent 48%,rgba(255,0,136,.015) 49%,rgba(255,0,136,.015) 51%,transparent 52%);
+            background-size:100px 100px;pointer-events:none;z-index:1
+        }
+
+        /* ── LAYOUT ── */
+        .page{position:relative;z-index:10;display:flex;flex-direction:column;min-height:100vh}
+
+        /* ── HEADER ── */
+        .header{
+            display:flex;align-items:center;gap:12px;padding:14px 20px;
+            border-bottom:1px solid rgba(168,85,247,.2);background:rgba(10,14,39,.7);
+            position:sticky;top:0;z-index:100;backdrop-filter:blur(8px);
+        }
+        .btn-back{
+            background:rgba(168,85,247,.15);border:1.5px solid rgba(168,85,247,.4);
+            color:#a855f7;padding:6px 14px;border-radius:8px;cursor:pointer;
+            font-family:'Rajdhani',sans-serif;font-size:.85rem;font-weight:700;
+            transition:.2s;letter-spacing:.05em;
+        }
+        .btn-back:hover{background:rgba(168,85,247,.3)}
+        .btn-settings{
+            background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);
+            color:rgba(255,255,255,.6);padding:6px 14px;border-radius:8px;cursor:pointer;
+            font-family:'Rajdhani',sans-serif;font-size:.85rem;font-weight:600;
+            transition:.2s;letter-spacing:.05em;
+        }
+        .btn-settings:hover{background:rgba(255,255,255,.12);color:#fff}
+        .header-title{
+            font-family:'Orbitron',sans-serif;font-size:1.3rem;font-weight:700;
+            color:#a855f7;text-shadow:0 0 15px rgba(168,85,247,.7);letter-spacing:.1em;flex:1;
+        }
+        .sync-bar{display:flex;align-items:center;gap:6px;font-size:.7rem}
+        .sync-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:background .4s}
+        .sync-dot.ok{background:#0f8}.sync-dot.loading{background:#fa0;animation:pulse .8s ease-in-out infinite}
+        .sync-dot.err{background:#ff0088}.sync-dot.idle{background:#666}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.2}}
+        .sync-txt.ok{color:#0f8}.sync-txt.loading{color:#fa0}.sync-txt.err{color:#ff0088}.sync-txt.idle{color:#888}
+
+        /* ── TOOLBAR ── */
+        .toolbar{
+            display:flex;align-items:center;gap:10px;padding:12px 20px;
+            border-bottom:1px solid rgba(168,85,247,.15);flex-wrap:wrap;
+        }
+        .search-wrap{flex:1;min-width:180px;position:relative}
+        .search-wrap input{
+            width:100%;background:rgba(255,255,255,.06);border:1.5px solid rgba(168,85,247,.3);
+            border-radius:8px;padding:8px 14px 8px 36px;color:#fff;font-family:'Rajdhani',sans-serif;
+            font-size:.9rem;outline:none;transition:.2s;
+        }
+        .search-wrap input:focus{border-color:#a855f7;box-shadow:0 0 12px rgba(168,85,247,.3)}
+        .search-wrap input::placeholder{color:rgba(255,255,255,.35)}
+        .search-wrap .ico{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:1rem;opacity:.5}
+        .count-lbl{font-size:.8rem;color:rgba(168,85,247,.8);font-family:'Orbitron',sans-serif;white-space:nowrap}
+        .btn-add{
+            background:rgba(168,85,247,.2);border:1.5px solid #a855f7;color:#a855f7;
+            padding:8px 16px;border-radius:8px;cursor:pointer;font-family:'Rajdhani',sans-serif;
+            font-size:.9rem;font-weight:700;transition:.2s;letter-spacing:.05em;white-space:nowrap;
+        }
+        .btn-add:hover{background:rgba(168,85,247,.4);box-shadow:0 0 16px rgba(168,85,247,.4)}
+
+        /* ── STATS BAR ── */
+        .stats-bar{
+            display:flex;gap:0;border-bottom:1px solid rgba(168,85,247,.15);
+            background:rgba(10,14,39,.5);overflow-x:auto;scrollbar-width:none;
+        }
+        .stats-bar::-webkit-scrollbar{display:none}
+        .stat-item{
+            display:flex;flex-direction:column;align-items:center;padding:8px 18px;
+            border-right:1px solid rgba(168,85,247,.1);flex-shrink:0;
+        }
+        .stat-val{font-family:'Orbitron',sans-serif;font-size:.9rem;font-weight:700;color:#a855f7}
+        .stat-lbl{font-size:.62rem;color:rgba(255,255,255,.4);letter-spacing:.06em;margin-top:1px}
+
+        /* ── FILTER BAR ── */
+        .filter-bar{
+            display:flex;align-items:center;gap:8px;padding:8px 20px;
+            border-bottom:1px solid rgba(168,85,247,.1);flex-wrap:wrap;
+            background:rgba(10,14,39,.3);
+        }
+        .filter-select{
+            background:rgba(255,255,255,.05);border:1.5px solid rgba(168,85,247,.2);
+            border-radius:7px;padding:5px 10px;color:rgba(255,255,255,.7);
+            font-family:'Rajdhani',sans-serif;font-size:.8rem;outline:none;
+            cursor:pointer;transition:.2s;
+        }
+        .filter-select:focus,.filter-select.active{border-color:#a855f7;color:#fff}
+        .filter-select option{background:#1a0a30;color:#fff}
+        .filter-sep{width:1px;height:20px;background:rgba(168,85,247,.15);flex-shrink:0}
+        .btn-reset-filters{
+            background:none;border:none;color:rgba(255,0,136,.6);font-size:.75rem;
+            cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;
+            padding:4px 8px;border-radius:6px;transition:.2s;display:none;
+        }
+        .btn-reset-filters:hover{color:#ff0088}
+        .btn-reset-filters.visible{display:block}
+
+        /* ── GRID ── */
+        .grid{
+            display:grid;
+            grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+            gap:14px;padding:20px;flex:1;
+        }
+        .card{
+            cursor:pointer;transition:transform .25s,box-shadow .25s;
+            animation:fadeUp .3s ease-out both;
+        }
+        @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        .card:hover{transform:translateY(-4px);box-shadow:0 8px 25px rgba(168,85,247,.25)}
+        .thumb{
+            width:100%;aspect-ratio:3/4;position:relative;
+            border-radius:8px;overflow:hidden;background:rgba(168,85,247,.08);
+            border:1.5px solid rgba(168,85,247,.2);
+            display:flex;align-items:center;justify-content:center;
+        }
+        .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+        .thumb .no-img{font-size:2.5rem;opacity:.4}
+        .etat-badge{
+            position:absolute;top:5px;right:5px;font-size:.5rem;font-weight:700;
+            padding:2px 6px;border-radius:3px;letter-spacing:.05em;z-index:2;
+        }
+        .b-neuf{background:rgba(0,255,255,.9);color:#000}
+        .b-tb{background:rgba(0,255,136,.9);color:#000}
+        .b-bon{background:rgba(255,170,0,.9);color:#000}
+        .b-moyen{background:rgba(255,102,0,.9);color:#000}
+        .b-mauvais{background:rgba(255,0,136,.9);color:#fff}
+
+        .card-info{padding:6px 2px}
+        .card-name{
+            font-size:.72rem;font-weight:700;white-space:nowrap;overflow:hidden;
+            text-overflow:ellipsis;color:#fff;margin-bottom:3px;
+        }
+        .card-tags{display:flex;gap:3px;flex-wrap:wrap}
+        .tag{font-size:.5rem;padding:2px 5px;border-radius:3px;font-weight:700}
+        .tag-console{background:rgba(168,85,247,.15);color:#a855f7;border:1px solid rgba(168,85,247,.3)}
+        .tag-ok{background:rgba(0,255,136,.15);color:#0f8;border:1px solid rgba(0,255,136,.3)}
+
+        /* ── COMPOSANTS ── */
+        .comp-grid{
+            display:grid;grid-template-columns:1fr 1fr;gap:8px;
+        }
+        .comp-item{
+            border:1.5px solid rgba(168,85,247,.15);border-radius:8px;
+            padding:8px 10px;background:rgba(255,255,255,.03);
+            display:flex;flex-direction:column;gap:6px;transition:.2s;
+        }
+        .comp-item.present{border-color:rgba(168,85,247,.45);background:rgba(168,85,247,.08)}
+        .comp-header{display:flex;align-items:center;gap:8px}
+        .comp-toggle{
+            width:18px;height:18px;border-radius:4px;border:1.5px solid rgba(168,85,247,.4);
+            background:rgba(168,85,247,.08);cursor:pointer;appearance:none;
+            flex-shrink:0;display:flex;align-items:center;justify-content:center;
+            transition:.2s;position:relative;
+        }
+        .comp-toggle:checked{background:#a855f7;border-color:#a855f7}
+        .comp-toggle:checked::after{
+            content:'✓';position:absolute;color:#fff;font-size:.7rem;font-weight:900;
+        }
+        .comp-name{font-size:.8rem;font-weight:700;color:rgba(255,255,255,.7);flex:1}
+        .comp-etat{
+            background:rgba(255,255,255,.04);border:1px solid rgba(168,85,247,.2);
+            border-radius:5px;padding:4px 8px;color:#fff;font-family:'Rajdhani',sans-serif;
+            font-size:.75rem;outline:none;width:100%;opacity:.4;pointer-events:none;
+            transition:.2s;
+        }
+        .comp-etat.enabled{opacity:1;pointer-events:auto;border-color:rgba(168,85,247,.35)}
+        .comp-etat option{background:#1a0a30;color:#fff}
+
+        /* media type buttons */
+        .media-btn{
+            background:rgba(255,255,255,.05);border:1.5px solid rgba(168,85,247,.2);
+            color:rgba(255,255,255,.5);padding:5px 12px;border-radius:20px;cursor:pointer;
+            font-family:'Rajdhani',sans-serif;font-size:.78rem;font-weight:700;
+            transition:.2s;letter-spacing:.04em;
+        }
+        .media-btn:hover{border-color:rgba(168,85,247,.5);color:#a855f7}
+        .media-btn.active{background:rgba(168,85,247,.2);border-color:#a855f7;color:#a855f7;box-shadow:0 0 10px rgba(168,85,247,.2)}
+
+        /* tags composants dans la grille */
+        .tag-boite{background:rgba(0,255,255,.15);color:#0ff;border:1px solid rgba(0,255,255,.3)}
+        .tag-loose{background:rgba(255,170,0,.15);color:#fa0;border:1px solid rgba(255,170,0,.3)}
+
+        /* ── EMPTY STATE ── */
+        .empty{
+            flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+            gap:14px;opacity:.5;padding:40px 20px;text-align:center;
+        }
+        .empty-ico{font-size:4rem}
+        .empty-txt{font-size:1.1rem;font-weight:600;color:#a855f7}
+        .empty-sub{font-size:.8rem;color:rgba(255,255,255,.5)}
+
+        /* ── MODAL ── */
+        .overlay{
+            position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;
+            display:none;align-items:center;justify-content:center;padding:20px;
+        }
+        .overlay.open{display:flex}
+        .modal{
+            background:linear-gradient(135deg,#0d1135,#1a0a30);border:1.5px solid rgba(168,85,247,.4);
+            border-radius:14px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;
+            box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 40px rgba(168,85,247,.15);
+        }
+        .modal-header{
+            display:flex;align-items:center;justify-content:space-between;
+            padding:18px 20px;border-bottom:1px solid rgba(168,85,247,.2);
+        }
+        .modal-title{font-family:'Orbitron',sans-serif;font-size:1rem;color:#a855f7;letter-spacing:.08em}
+        .btn-close{
+            background:none;border:none;color:rgba(255,255,255,.5);font-size:1.4rem;
+            cursor:pointer;transition:.2s;line-height:1;
+        }
+        .btn-close:hover{color:#ff0088}
+        .modal-body{padding:20px;display:flex;flex-direction:column;gap:16px}
+
+        /* Onglets */
+        .tabs{display:flex;gap:8px}
+        .tab{
+            flex:1;padding:8px;text-align:center;border-radius:8px;cursor:pointer;
+            border:1.5px solid rgba(168,85,247,.25);font-size:.8rem;font-weight:700;
+            color:rgba(168,85,247,.6);transition:.2s;letter-spacing:.05em;
+        }
+        .tab.active{background:rgba(168,85,247,.2);border-color:#a855f7;color:#a855f7;box-shadow:0 0 12px rgba(168,85,247,.2)}
+        .tab:hover:not(.active){border-color:rgba(168,85,247,.5);color:#a855f7}
+
+        /* Recherche API */
+        .api-search-row{display:flex;gap:8px}
+        .api-search-row input{
+            flex:1;background:rgba(255,255,255,.06);border:1.5px solid rgba(168,85,247,.3);
+            border-radius:8px;padding:9px 14px;color:#fff;font-family:'Rajdhani',sans-serif;
+            font-size:.9rem;outline:none;transition:.2s;
+        }
+        .api-search-row input:focus{border-color:#a855f7}
+        .api-search-row input::placeholder{color:rgba(255,255,255,.35)}
+        .btn-search{
+            background:rgba(168,85,247,.2);border:1.5px solid #a855f7;color:#a855f7;
+            padding:9px 14px;border-radius:8px;cursor:pointer;font-size:.9rem;font-weight:700;
+            font-family:'Rajdhani',sans-serif;transition:.2s;white-space:nowrap;
+        }
+        .btn-search:hover{background:rgba(168,85,247,.4)}
+        .btn-search:disabled{opacity:.4;cursor:default}
+
+        .results-list{display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto}
+        .result-item{
+            display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;
+            background:rgba(255,255,255,.04);border:1px solid rgba(168,85,247,.15);
+            cursor:pointer;transition:.2s;
+        }
+        .result-item:hover{background:rgba(168,85,247,.12);border-color:rgba(168,85,247,.4)}
+        .result-item img{width:44px;height:58px;object-fit:cover;border-radius:4px;flex-shrink:0;background:rgba(168,85,247,.1)}
+        .result-info{flex:1;min-width:0}
+        .result-name{font-size:.85rem;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .result-sub{font-size:.7rem;color:rgba(168,85,247,.7)}
+        .result-item.selected{background:rgba(168,85,247,.2);border-color:#a855f7}
+
+        /* Formulaire */
+        .form-group{display:flex;flex-direction:column;gap:5px}
+        .form-label{font-size:.78rem;font-weight:700;color:rgba(168,85,247,.8);letter-spacing:.05em}
+        .form-input,.form-select{
+            background:rgba(255,255,255,.06);border:1.5px solid rgba(168,85,247,.3);
+            border-radius:8px;padding:9px 12px;color:#fff;font-family:'Rajdhani',sans-serif;
+            font-size:.9rem;outline:none;transition:.2s;width:100%;
+        }
+        .form-input:focus,.form-select:focus{border-color:#a855f7;box-shadow:0 0 10px rgba(168,85,247,.2)}
+        .form-input::placeholder{color:rgba(255,255,255,.3)}
+        .form-select option{background:#1a0a30;color:#fff}
+        .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+        .form-cover-preview{
+            display:flex;align-items:center;gap:12px;
+        }
+        .cover-thumb{
+            width:60px;height:80px;border-radius:6px;object-fit:cover;
+            border:1.5px solid rgba(168,85,247,.3);background:rgba(168,85,247,.08);
+            display:flex;align-items:center;justify-content:center;font-size:1.5rem;opacity:.5;
+        }
+        .cover-thumb.has-img{opacity:1;background:none}
+        .form-cover-url{flex:1}
+
+        /* Barcode */
+        .barcode-section{display:flex;flex-direction:column;gap:12px}
+        .video-wrap{
+            position:relative;width:100%;aspect-ratio:4/3;background:#000;
+            border-radius:10px;overflow:hidden;border:1.5px solid rgba(168,85,247,.3);
+        }
+        #scanVideo{width:100%;height:100%;object-fit:cover}
+        .scan-overlay{
+            position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+            pointer-events:none;
+        }
+        .scan-box{
+            width:60%;aspect-ratio:2/1;border:2px solid #a855f7;border-radius:6px;
+            box-shadow:0 0 0 2000px rgba(0,0,0,.35);
+        }
+        .scan-line{
+            position:absolute;width:58%;height:2px;background:linear-gradient(90deg,transparent,#a855f7,transparent);
+            animation:scanAnim 1.5s ease-in-out infinite;
+        }
+        @keyframes scanAnim{0%{top:20%}100%{top:78%}}
+        .btn-scan{
+            background:rgba(168,85,247,.2);border:1.5px solid #a855f7;color:#a855f7;
+            padding:10px;border-radius:8px;cursor:pointer;font-family:'Rajdhani',sans-serif;
+            font-size:.95rem;font-weight:700;text-align:center;transition:.2s;
+        }
+        .btn-scan:hover{background:rgba(168,85,247,.4)}
+        .scan-result{
+            padding:10px 14px;background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.3);
+            border-radius:8px;font-size:.85rem;color:#a855f7;text-align:center;display:none;
+        }
+
+        /* Modal actions */
+        .modal-actions{display:flex;gap:10px;justify-content:flex-end;padding-top:4px}
+        .btn-cancel{
+            background:none;border:1.5px solid rgba(255,255,255,.2);color:rgba(255,255,255,.5);
+            padding:9px 20px;border-radius:8px;cursor:pointer;font-family:'Rajdhani',sans-serif;
+            font-size:.9rem;font-weight:700;transition:.2s;
+        }
+        .btn-cancel:hover{border-color:rgba(255,255,255,.4);color:#fff}
+        .btn-save{
+            background:rgba(168,85,247,.3);border:1.5px solid #a855f7;color:#fff;
+            padding:9px 24px;border-radius:8px;cursor:pointer;font-family:'Rajdhani',sans-serif;
+            font-size:.9rem;font-weight:700;transition:.2s;letter-spacing:.05em;
+        }
+        .btn-save:hover{background:rgba(168,85,247,.55);box-shadow:0 0 16px rgba(168,85,247,.4)}
+
+        /* ── DETAIL / EDIT MODAL ── */
+        .detail-cover{
+            width:100px;height:133px;border-radius:8px;object-fit:cover;
+            border:1.5px solid rgba(168,85,247,.3);background:rgba(168,85,247,.1);
+            display:flex;align-items:center;justify-content:center;font-size:3rem;
+        }
+        .detail-head{display:flex;gap:16px;align-items:flex-start}
+        .detail-meta{flex:1;display:flex;flex-direction:column;gap:6px}
+        .detail-name{font-family:'Orbitron',sans-serif;font-size:1rem;color:#fff;font-weight:700}
+        .detail-sub{font-size:.8rem;color:rgba(168,85,247,.7)}
+        .detail-notes{
+            background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
+            border-radius:8px;padding:10px;font-size:.85rem;color:rgba(255,255,255,.7);
+            min-height:60px;white-space:pre-wrap;
+        }
+        .btn-edit{
+            background:rgba(0,255,255,.1);border:1.5px solid #0ff;color:#0ff;
+            padding:8px 16px;border-radius:8px;cursor:pointer;font-family:'Rajdhani',sans-serif;
+            font-size:.85rem;font-weight:700;transition:.2s;
+        }
+        .btn-edit:hover{background:rgba(0,255,255,.25)}
+        .btn-delete{
+            background:rgba(255,0,136,.1);border:1.5px solid #ff0088;color:#ff0088;
+            padding:8px 16px;border-radius:8px;cursor:pointer;font-family:'Rajdhani',sans-serif;
+            font-size:.85rem;font-weight:700;transition:.2s;
+        }
+        .btn-delete:hover{background:rgba(255,0,136,.25)}
+
+        /* ── TOAST ── */
+        .toast{
+            position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+            background:rgba(10,14,39,.97);border:2px solid #a855f7;border-radius:10px;
+            padding:11px 22px;color:#a855f7;font-weight:700;font-size:.9rem;
+            z-index:999;opacity:0;transition:all .3s;pointer-events:none;
+            white-space:nowrap;letter-spacing:.05em;font-family:'Rajdhani',sans-serif;
+        }
+        .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+        /* ── SANS JEU BADGE ── */
+        .badge-sans-jeu{
+            position:absolute;bottom:0;left:0;right:0;
+            background:rgba(255,102,0,.82);
+            color:#fff;font-size:.55rem;font-weight:700;
+            text-align:center;padding:3px 0;letter-spacing:.06em;
+            backdrop-filter:blur(2px);
+        }
+
+        /* ── PAGINATION ── */
+        .pagination{
+            display:flex;align-items:center;justify-content:center;
+            gap:6px;padding:16px 20px;flex-wrap:wrap;
+        }
+        .pg-btn{
+            background:rgba(168,85,247,.1);border:1.5px solid rgba(168,85,247,.25);
+            color:rgba(168,85,247,.7);padding:6px 12px;border-radius:7px;
+            cursor:pointer;font-family:'Orbitron',sans-serif;font-size:.65rem;
+            font-weight:700;transition:.2s;min-width:36px;text-align:center;
+        }
+        .pg-btn:hover{background:rgba(168,85,247,.25);color:#a855f7}
+        .pg-btn.active{background:rgba(168,85,247,.3);border-color:#a855f7;color:#fff;box-shadow:0 0 10px rgba(168,85,247,.3)}
+        .pg-btn:disabled{opacity:.25;cursor:default}
+        .pg-info{font-family:'Orbitron',sans-serif;font-size:.65rem;color:rgba(168,85,247,.5);padding:0 6px}
+        .loading-dots{display:flex;gap:4px;justify-content:center;align-items:center;padding:10px}
+        .loading-dots span{width:6px;height:6px;border-radius:50%;background:#a855f7;animation:dot .8s ease-in-out infinite}
+        .loading-dots span:nth-child(2){animation-delay:.15s}
+        .loading-dots span:nth-child(3){animation-delay:.3s}
+        @keyframes dot{0%,100%{opacity:.2;transform:scale(.8)}50%{opacity:1;transform:scale(1.2)}}
+
+        /* ── RESPONSIVE ── */
+        @media(max-width:480px){
+            .header{padding:10px 14px}
+            .header-title{font-size:1rem}
+            .toolbar{padding:10px 14px;gap:8px}
+            .grid{padding:14px;gap:10px;grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}
+            .form-row{grid-template-columns:1fr}
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <!-- HEADER -->
+    <div class="header">
+        <button class="btn-back" onclick="go('collectioner.html')">← Retour</button>
+        <div class="header-title">💾 JEUX</div>
+        <button class="btn-settings" onclick="go('settings.html')">⚙</button>
+        <div class="sync-bar">
+            <div class="sync-dot idle" id="syncDot"></div>
+            <span class="sync-txt idle" id="syncTxt" style="font-size:.7rem">—</span>
+        </div>
+    </div>
+
+    <!-- STATS BAR -->
+    <div class="stats-bar" id="statsBar">
+        <div class="stat-item"><div class="stat-val" id="statTotal">0</div><div class="stat-lbl">JEUX</div></div>
+        <div class="stat-item"><div class="stat-val" id="statConsoles">0</div><div class="stat-lbl">CONSOLES</div></div>
+        <div class="stat-item"><div class="stat-val" id="statComplets">0</div><div class="stat-lbl">COMPLETS</div></div>
+        <div class="stat-item"><div class="stat-val" id="statPrix">—</div><div class="stat-lbl">INVESTI</div></div>
+        <div class="stat-item"><div class="stat-val" id="statValeur">—</div><div class="stat-lbl">VALEUR</div></div>
+    </div>
+
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+        <div class="search-wrap">
+            <span class="ico">🔍</span>
+            <input type="text" id="filterInput" placeholder="Rechercher…" oninput="renderGrid(true)">
+        </div>
+        <span class="count-lbl" id="countLbl">0 jeux</span>
+        <button class="btn-add" onclick="openAddModal()">+ Ajouter</button>
+    </div>
+
+    <!-- FILTER BAR -->
+    <div class="filter-bar">
+        <select class="filter-select" id="fltConsole" onchange="renderGrid(true)">
+            <option value="">Toutes consoles</option>
+        </select>
+        <select class="filter-select" id="fltRegion" onchange="renderGrid(true)">
+            <option value="">Toutes régions</option>
+            <option value="PAL">PAL</option>
+            <option value="NTSC-U">NTSC-U</option>
+            <option value="NTSC-J">NTSC-J</option>
+        </select>
+        <select class="filter-select" id="fltEtat" onchange="renderGrid(true)">
+            <option value="">Tous états</option>
+            <option value="Neuf">Neuf</option>
+            <option value="TB">Très bon</option>
+            <option value="Bon">Bon</option>
+            <option value="Moyen">Moyen</option>
+            <option value="Mauvais">Mauvais</option>
+        </select>
+        <select class="filter-select" id="fltComplet" onchange="renderGrid(true)">
+            <option value="">Complétude</option>
+            <option value="complet">Complet</option>
+            <option value="loose">Loose</option>
+            <option value="boite">Avec boîte</option>
+        </select>
+        <div class="filter-sep"></div>
+        <select class="filter-select" id="fltSort" onchange="renderGrid(true)">
+            <option value="date">Récents d'abord</option>
+            <option value="az">Titre A→Z</option>
+            <option value="za">Titre Z→A</option>
+            <option value="console">Console</option>
+            <option value="etat">État</option>
+            <option value="prix_asc">Prix ↑</option>
+            <option value="prix_desc">Prix ↓</option>
+        </select>
+        <button class="btn-reset-filters" id="btnResetFilters" onclick="resetFilters()">✕ Réinitialiser</button>
+    </div>
+
+    <!-- GRID -->
+    <div class="grid" id="grid"></div>
+    <div class="pagination" id="pagination" style="display:none"></div>
+    <div class="empty" id="empty" style="display:none">
+        <div class="empty-ico">💾</div>
+        <div class="empty-txt">Collection vide</div>
+        <div class="empty-sub">Appuie sur "+ Ajouter" pour commencer</div>
+    </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     MODAL AJOUT
+════════════════════════════════════════════════ -->
+<div class="overlay" id="addOverlay">
+<div class="modal">
+    <div class="modal-header">
+        <div class="modal-title" id="addModalTitle">AJOUTER UN JEU</div>
+        <button class="btn-close" onclick="closeAddModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+        <!-- Onglets -->
+        <div class="tabs">
+            <div class="tab active" id="tab-api" onclick="switchTab('api')">🔍 Recherche</div>
+            <div class="tab" id="tab-manual" onclick="switchTab('manual')">✏️ Manuel</div>
+            <div class="tab" id="tab-barcode" onclick="switchTab('barcode')">📷 Barcode</div>
+        </div>
+
+        <!-- ── ONGLET API ── -->
+        <div id="pane-api">
+            <div style="display:flex;flex-direction:column;gap:10px">
+                <div class="api-search-row">
+                    <input type="text" id="apiQuery" placeholder="Nom du jeu…" onkeydown="if(event.key==='Enter')searchAPI()">
+                    <button class="btn-search" id="btnApiSearch" onclick="searchAPI()">Chercher</button>
+                </div>
+                <input type="text" id="apiConsole" class="form-input" placeholder="Console (optionnel — ex: NES, PS1, SNES…)" style="font-size:.82rem">
+                <div id="apiResults" class="results-list" style="display:none"></div>
+                <div id="apiLoading" style="display:none"><div class="loading-dots"><span></span><span></span><span></span></div></div>
+            </div>
+        </div>
+
+        <!-- ── ONGLET MANUEL ── -->
+        <div id="pane-manual" style="display:none"><!-- rempli dynamiquement --></div>
+
+        <!-- ── ONGLET BARCODE ── -->
+        <div id="pane-barcode" style="display:none">
+            <div class="barcode-section">
+                <div class="video-wrap" id="videoWrap" style="display:none">
+                    <video id="scanVideo" autoplay playsinline muted></video>
+                    <div class="scan-overlay">
+                        <div class="scan-box"></div>
+                        <div class="scan-line"></div>
+                    </div>
+                </div>
+                <button class="btn-scan" id="btnStartScan" onclick="startScan()">📷 Démarrer la caméra</button>
+                <button class="btn-scan" id="btnStopScan" onclick="stopScan()" style="display:none;background:rgba(255,0,136,.15);border-color:#ff0088;color:#ff0088">⏹ Arrêter</button>
+                <div class="scan-result" id="scanResult"></div>
+                <div style="font-size:.75rem;color:rgba(255,255,255,.35);text-align:center">
+                    Pointe le code-barres vers la caméra pour le scanner automatiquement.
+                </div>
+            </div>
+        </div>
+
+        <!-- ── FORMULAIRE COMMUN ── -->
+        <div id="gameForm" style="display:none">
+            <div style="display:flex;flex-direction:column;gap:14px">
+                <div class="form-cover-preview" id="coverPreviewWrap">
+                    <div id="coverThumb" class="cover-thumb">🎮</div>
+                    <div class="form-cover-url">
+                        <div class="form-label">URL de la jaquette</div>
+                        <input type="url" id="fCoverUrl" class="form-input" placeholder="https://…" oninput="updateCoverPreview()">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="form-label">Titre *</div>
+                    <input type="text" id="fTitle" class="form-input" placeholder="Nom du jeu">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <div class="form-label">Console</div>
+                        <input type="text" id="fConsole" class="form-input" placeholder="NES, PS1, GameBoy…">
+                    </div>
+                    <div class="form-group">
+                        <div class="form-label">Année</div>
+                        <input type="number" id="fYear" class="form-input" placeholder="1990">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <div class="form-label">Région</div>
+                        <select id="fRegion" class="form-select">
+                            <option value="">— Région —</option>
+                            <option value="PAL">PAL</option>
+                            <option value="NTSC-U">NTSC-U</option>
+                            <option value="NTSC-J">NTSC-J</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-label">État général</div>
+                        <select id="fEtat" class="form-select">
+                            <option value="">— État —</option>
+                            <option value="Neuf">Neuf / Scellé</option>
+                            <option value="TB">Très bon</option>
+                            <option value="Bon">Bon</option>
+                            <option value="Moyen">Moyen</option>
+                            <option value="Mauvais">Mauvais</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <div class="form-label">Prix payé (€)</div>
+                        <input type="number" id="fPrix" class="form-input" placeholder="0.00" step="0.01" min="0">
+                    </div>
+                    <div class="form-group">
+                        <div class="form-label">Valeur estimée (€)</div>
+                        <input type="number" id="fValeur" class="form-input" placeholder="0.00" step="0.01" min="0">
+                    </div>
+                </div>
+                <div class="form-group" style="grid-column:1/-1">
+                    <div class="form-label">Composants présents & état</div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px" id="mediaTypeBtns">
+                        <button type="button" class="media-btn" data-type="cartouche" onclick="setMediaType('cartouche')">🎮 Cartouche</button>
+                        <button type="button" class="media-btn" data-type="cd" onclick="setMediaType('cd')">💿 CD</button>
+                        <button type="button" class="media-btn" data-type="cassette" onclick="setMediaType('cassette')">📼 Cassette</button>
+                        <button type="button" class="media-btn" data-type="disquette" onclick="setMediaType('disquette')">💾 Disquette</button>
+                    </div>
+                    <div class="comp-grid" id="compGrid">
+                        <!-- généré par JS -->
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="form-label">Notes</div>
+                    <textarea id="fNotes" class="form-input" rows="2" placeholder="Remarques, cote estimée…" style="resize:vertical"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn-cancel" onclick="closeAddModal()">Annuler</button>
+                    <button class="btn-save" onclick="saveGame()">💾 Enregistrer</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     MODAL DÉTAIL / ÉDITION
+════════════════════════════════════════════════ -->
+<div class="overlay" id="detailOverlay">
+<div class="modal">
+    <div class="modal-header">
+        <div class="modal-title" id="detailModalTitle">DÉTAIL</div>
+        <button class="btn-close" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════════════════════════════════════════
+     SCRIPTS
+════════════════════════════════════════════════ -->
+<script src="gist.js"></script>
+<script src="data.js"></script>
+<script>
+/* ── CONFIG ── */
+const LS_KEY = 'jeuxCollection';
+
+// Identifiants ScreenScraper — utilise les credentials utilisateur comme dev (usage personnel)
+function ssId()  { return localStorage.getItem('ssId')  || ''; }
+function ssPwd() { return localStorage.getItem('ssPwd') || ''; }
+const SS_BASE = 'https://www.screenscraper.fr/api2';
+
+function ssParams(extra={}){
+    const p = new URLSearchParams({
+        softname:   'collectioner',
+        ssid:       ssId(),
+        sspassword: ssPwd(),
+        output:     'json',
+        ...extra
+    });
+    return p.toString();
+}
+/* ── COMPOSANTS DISPONIBLES ── */
+const MEDIA_TYPES = {
+    cartouche: '🎮 Cartouche',
+    cd:        '💿 CD',
+    cassette:  '📼 Cassette',
+    disquette: '💾 Disquette',
+};
+
+// Composants fixes (toujours présents)
+const COMPOSANTS_FIXES = [
+    { id:'boite',    label:'📦 Boîte',    note: true },
+    { id:'notice',   label:'📄 Notice',   note: true },
+    { id:'stickers', label:'🏷️ Stickers', note: true },
+    { id:'extras',   label:'✨ Extras',   text: true },
+];
+
+// Composant média variable selon le type choisi
+function getMediaComp(mediaType){
+    if(!mediaType) return null;
+    return { id:'media', label: MEDIA_TYPES[mediaType], note: true };
+}
+
+function getComposants(mediaType){
+    const media = getMediaComp(mediaType);
+    return media ? [media, ...COMPOSANTS_FIXES] : COMPOSANTS_FIXES;
+}
+
+const ETATS_COMP = ['Neuf','TB','Bon','Moyen','Mauvais'];
+
+/* ── STATE ── */
+let collection      = [];
+let editingId       = null;
+let scanStream      = null;
+let scanTimer       = null;
+let selectedApiGame = null;
+let currentMediaType = '';
+let currentPage     = 1;
+const PAGE_SIZE     = 25;
+
+/* ── UTILS ── */
+function go(url){ window.location.href = url; }
+
+let toastTimer;
+function showToast(msg, color='#a855f7'){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.borderColor = color;
+    t.style.color = color;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+/* ── PERSISTENCE ── */
+const DEMO_JEUX = [
+    { id:'demo-1', titre:'Super Mario Bros.', console:'NES', region:'PAL', annee:'1985',
+      mediaType:'cartouche', composants:{boite:{present:true},notice:{present:true},media:{present:true}},
+      coverBox:'', coverMedia:'', _demoColor:'#e52521', _demoIcon:'🍄',
+      prix:45, valeur:80, notes:'', addedAt:'2024-01-01' },
+    { id:'demo-2', titre:'Zelda: Ocarina of Time', console:'Nintendo 64', region:'PAL', annee:'1998',
+      mediaType:'cartouche', composants:{boite:{present:true},notice:{present:false},media:{present:true}},
+      coverBox:'', coverMedia:'', _demoColor:'#2d6a1f', _demoIcon:'🗡️',
+      prix:30, valeur:65, notes:'Boîte légèrement usée', addedAt:'2024-02-01' },
+    { id:'demo-3', titre:'Sonic the Hedgehog 2', console:'Mega Drive', region:'PAL', annee:'1992',
+      mediaType:'cartouche', composants:{boite:{present:false},notice:{present:false},media:{present:true}},
+      coverBox:'', coverMedia:'', _demoColor:'#1565c0', _demoIcon:'💨',
+      prix:8, valeur:15, notes:'Loose', addedAt:'2024-03-01' },
+    { id:'demo-4', titre:'Final Fantasy VII', console:'PS1', region:'PAL', annee:'1997',
+      mediaType:'cd', composants:{boite:{present:true},notice:{present:true},media:{present:true}},
+      coverBox:'', coverMedia:'', _demoColor:'#4a0080', _demoIcon:'⚔️',
+      prix:25, valeur:50, notes:'Complet, très bon état', addedAt:'2024-04-01' },
+    { id:'demo-5', titre:'Super Metroid', console:'SNES', region:'PAL', annee:'1994',
+      mediaType:'cartouche', composants:{boite:{present:true},notice:{present:true},media:{present:true}},
+      coverBox:'', coverMedia:'', _demoColor:'#880e00', _demoIcon:'🚀',
+      prix:120, valeur:180, notes:'', addedAt:'2024-05-01' },
+    { id:'demo-6', titre:'Street Fighter II Turbo', console:'SNES', region:'PAL', annee:'1993',
+      mediaType:'cartouche', composants:{boite:{present:false},notice:{present:false},media:{present:true}},
+      coverBox:'', coverMedia:'', _demoColor:'#b71c1c', _demoIcon:'🥊',
+      prix:12, valeur:25, notes:'', addedAt:'2024-06-01' },
+];
+
+function loadCollection(){
+    try{ collection = JSON.parse(localStorage.getItem(LS_KEY) || '[]'); }
+    catch{ collection = []; }
+    // Données démo si collection vide
+    if(collection.length === 0){
+        collection = DEMO_JEUX.map(j=>({...j, _demo:true}));
+    }
+}
+function persistCollection(){
+    // Ne pas sauvegarder les données démo
+    const toSave = collection.filter(j => !j._demo);
+    localStorage.setItem(LS_KEY, JSON.stringify(toSave));
+    updateStats();
+    populateConsoleFilter();
+    if(typeof saveToGist === 'function') saveToGist();
+}
+
+/* ── SYNC BAR ── */
+function setSyncState(state, txt){
+    const dot  = document.getElementById('syncDot');
+    const stxt = document.getElementById('syncTxt');
+    dot.className  = 'sync-dot ' + state;
+    stxt.className = 'sync-txt ' + state;
+    stxt.textContent = txt;
+}
+
+async function initSync(){
+    const gistId = localStorage.getItem('gistId');
+    const token  = localStorage.getItem('githubToken');
+    if(!gistId || !token){ setSyncState('idle','Gist non configuré'); return; }
+    setSyncState('loading','Sync…');
+    try{
+        await loadFromGist();
+        loadCollection();
+        renderGrid();
+        setSyncState('ok','✓ Synchronisé');
+    }catch(e){
+        setSyncState('err','Erreur sync');
+    }
+}
+
+/* ── RENDER GRID ── */
+/* ── STATS ── */
+function updateStats(){
+    const total    = collection.length;
+    const consoles = new Set(collection.map(g=>g.console).filter(Boolean)).size;
+    const complets = collection.filter(g=>{
+        const c = g.composants||{};
+        return (c.media||c.cartouche||{}).present && (c.boite||{}).present && (c.notice||{}).present;
+    }).length;
+    const totalPrix   = collection.reduce((s,g)=>s+(g.prix||0),0);
+    const totalValeur = collection.reduce((s,g)=>s+(g.valeur||0),0);
+
+    document.getElementById('statTotal').textContent    = total;
+    document.getElementById('statConsoles').textContent = consoles;
+    document.getElementById('statComplets').textContent = complets;
+    document.getElementById('statPrix').textContent     = totalPrix   ? totalPrix.toFixed(0)+'€'   : '—';
+    document.getElementById('statValeur').textContent   = totalValeur ? totalValeur.toFixed(0)+'€' : '—';
+}
+
+/* ── FILTRE CONSOLE (populate) ── */
+function populateConsoleFilter(){
+    const sel = document.getElementById('fltConsole');
+    const current = sel.value;
+    const consoles = [...new Set(collection.map(g=>g.console).filter(Boolean))].sort();
+    sel.innerHTML = '<option value="">Toutes consoles</option>' +
+        consoles.map(c=>`<option value="${esc(c)}" ${current===c?'selected':''}>${esc(c)}</option>`).join('');
+}
+
+function resetFilters(){
+    document.getElementById('filterInput').value  = '';
+    document.getElementById('fltConsole').value   = '';
+    document.getElementById('fltRegion').value    = '';
+    document.getElementById('fltEtat').value      = '';
+    document.getElementById('fltComplet').value   = '';
+    document.getElementById('fltSort').value      = 'date';
+    renderGrid();
+}
+
+function renderGrid(resetPage){
+    if(resetPage) currentPage = 1;
+    const q        = document.getElementById('filterInput').value.toLowerCase();
+    const fConsole = document.getElementById('fltConsole').value;
+    const fRegion  = document.getElementById('fltRegion').value;
+    const fEtat    = document.getElementById('fltEtat').value;
+    const fComplet = document.getElementById('fltComplet').value;
+    const fSort    = document.getElementById('fltSort').value;
+    const grid     = document.getElementById('grid');
+    const empty    = document.getElementById('empty');
+    const lbl      = document.getElementById('countLbl');
+    const pag      = document.getElementById('pagination');
+
+    const hasFilter = q || fConsole || fRegion || fEtat || fComplet;
+    document.getElementById('btnResetFilters').classList.toggle('visible', !!hasFilter);
+
+    let filtered = collection.filter(g=>{
+        if(q && !(
+            (g.title||'').toLowerCase().includes(q) ||
+            (g.console||'').toLowerCase().includes(q) ||
+            (g.notes||'').toLowerCase().includes(q)
+        )) return false;
+        if(fConsole && g.console !== fConsole) return false;
+        if(fRegion  && g.region  !== fRegion)  return false;
+        if(fEtat    && g.etat    !== fEtat)     return false;
+        if(fComplet){
+            const c = g.composants||{};
+            const hasMedia  = (c.media||c.cartouche||{}).present;
+            const hasBoite  = (c.boite||{}).present;
+            const hasNotice = (c.notice||{}).present;
+            if(fComplet==='complet' && !(hasMedia && hasBoite && hasNotice)) return false;
+            if(fComplet==='loose'   && !(hasMedia && !hasBoite))             return false;
+            if(fComplet==='boite'   && !hasBoite)                            return false;
+        }
+        return true;
+    });
+
+    filtered.sort((a,b)=>{
+        switch(fSort){
+            case 'az':       return (a.title||'').localeCompare(b.title||'');
+            case 'za':       return (b.title||'').localeCompare(a.title||'');
+            case 'console':  return (a.console||'').localeCompare(b.console||'');
+            case 'etat': {
+                const o = {Neuf:0,TB:1,Bon:2,Moyen:3,Mauvais:4,'':5};
+                return (o[a.etat]??5)-(o[b.etat]??5);
+            }
+            case 'prix_asc':  return (a.prix||0)-(b.prix||0);
+            case 'prix_desc': return (b.prix||0)-(a.prix||0);
+            default:          return new Date(b.addedAt||0)-new Date(a.addedAt||0);
+        }
+    });
+
+    const total      = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    if(currentPage > totalPages) currentPage = totalPages;
+    const start = (currentPage-1) * PAGE_SIZE;
+    const page  = filtered.slice(start, start + PAGE_SIZE);
+
+    lbl.textContent = total === collection.length
+        ? collection.length + ' jeu' + (collection.length!==1?'x':'')
+        : total + ' / ' + collection.length + ' jeux';
+
+    if(!total){
+        grid.style.display  = 'none';
+        pag.style.display   = 'none';
+        empty.style.display = 'flex';
+        empty.querySelector('.empty-txt').textContent = collection.length ? 'Aucun résultat' : 'Collection vide';
+        empty.querySelector('.empty-sub').textContent = collection.length ? "Essaie d'autres filtres" : 'Appuie sur "+ Ajouter" pour commencer';
+        return;
+    }
+    grid.style.display  = 'grid';
+    empty.style.display = 'none';
+
+    grid.innerHTML = page.map((g,i)=>{
+        const etatClass = {Neuf:'b-neuf',TB:'b-tb',Bon:'b-bon',Moyen:'b-moyen',Mauvais:'b-mauvais'}[g.etat] || '';
+        const comps    = g.composants||{};
+        const hasMedia = (comps.media||comps.cartouche||{}).present;
+        const hasBoite = (comps.boite||{}).present;
+        const hasNotice= (comps.notice||{}).present;
+
+        // Cover selon complétude
+        let coverUrl = '';
+        if(hasBoite || (!hasMedia && !hasBoite)){
+            coverUrl = g.coverBox || g.cover || '';
+        } else if(hasMedia && !hasBoite){
+            coverUrl = g.coverMedia || g.coverBox || g.cover || '';
+        } else {
+            coverUrl = g.cover || g.coverBox || '';
+        }
+
+        const imgHtml  = coverUrl
+            ? `<img loading="lazy" src="${coverUrl}" alt="${esc(g.title)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+            : '';
+        const demoPlaceholder = (!coverUrl && g._demo && g._demoColor)
+            ? `<div style="width:100%;height:100%;background:linear-gradient(135deg,${g._demoColor}cc,${g._demoColor}44);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px"><div style="font-size:2.2rem">${g._demoIcon||'🎮'}</div><div style="font-size:.52rem;font-weight:700;color:rgba(255,255,255,.8);text-align:center;padding:0 6px;letter-spacing:.04em;line-height:1.3">${esc(g.titre||g.title||'')}</div></div>`
+            : '';
+        const fallback = coverUrl ? `<div class="no-img" style="display:none">🎮</div>` : (demoPlaceholder || `<div class="no-img">🎮</div>`);
+        const badge    = g.etat ? `<span class="etat-badge ${etatClass}">${g.etat}</span>` : '';
+        const sansJeu  = (hasBoite && !hasMedia) ? `<div class="badge-sans-jeu">\u26A0 sans jeu</div>` : '';
+
+        const tagConsole = g.console ? `<span class="tag tag-console">${esc(g.console)}</span>` : '';
+        const tagRegion  = g.region  ? `<span class="tag" style="background:rgba(0,255,255,.1);color:#0ff;border:1px solid rgba(0,255,255,.25);font-size:.48rem;padding:2px 4px;border-radius:3px">${g.region}</span>` : '';
+
+        let typeTag = '';
+        if(hasMedia && hasBoite && hasNotice) typeTag = '<span class="tag tag-ok">Complet</span>';
+        else if(hasBoite && hasMedia)         typeTag = '<span class="tag tag-boite">Bo\u00eete</span>';
+        else if(hasMedia && !hasBoite)        typeTag = '<span class="tag tag-loose">Loose</span>';
+
+        const demoBadge = g._demo ? `<span class="etat-badge" style="top:auto;bottom:6px;right:6px;background:rgba(168,85,247,.4);color:#fff;border:1px solid rgba(168,85,247,.6)">DÉMO</span>` : '';
+
+        return `<div class="card" onclick="openDetail('${g.id}')" style="animation-delay:${Math.min(i*0.03,0.5)}s${g._demo?';opacity:.75':''}">
+            <div class="thumb">${imgHtml}${fallback}${badge}${sansJeu}${demoBadge}</div>
+            <div class="card-info">
+                <div class="card-name">${esc(g.title)}</div>
+                <div class="card-tags">${tagConsole}${tagRegion}${typeTag}</div>
+            </div>
+        </div>`;
+    }).join('');
+
+    // Pagination
+    if(totalPages <= 1){ pag.style.display = 'none'; return; }
+    pag.style.display = 'flex';
+    let html = `<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>&#8249;</button>`;
+    const range = [];
+    for(let p=1;p<=totalPages;p++){
+        if(p===1||p===totalPages||(p>=currentPage-2&&p<=currentPage+2)) range.push(p);
+        else if(range[range.length-1]!=='…') range.push('…');
+    }
+    range.forEach(p=>{
+        if(p==='…') html += `<span class="pg-info">…</span>`;
+        else html += `<button class="pg-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
+    });
+    html += `<button class="pg-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>&#8250;</button>`;
+    html += `<span class="pg-info">${start+1}-${Math.min(start+PAGE_SIZE,total)} / ${total}</span>`;
+    pag.innerHTML = html;
+}
+
+function goPage(p){
+    const q = document.getElementById('filterInput').value.toLowerCase();
+    const tot = collection.filter(g=>!q||(g.title||'').toLowerCase().includes(q)||(g.console||'').toLowerCase().includes(q)).length;
+    currentPage = Math.max(1, Math.min(p, Math.ceil(tot/PAGE_SIZE)||1));
+    renderGrid();
+    window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ══════════════════════════════════
+   MODAL AJOUT
+══════════════════════════════════ */
+function openAddModal(prefill=null){
+    editingId = null;
+    selectedApiGame = null;
+    document.getElementById('addModalTitle').textContent = 'AJOUTER UN JEU';
+    resetForm();
+    if(prefill) fillForm(prefill);
+    switchTab('api');
+    document.getElementById('addOverlay').classList.add('open');
+}
+
+function closeAddModal(){
+    stopScan();
+    document.getElementById('addOverlay').classList.remove('open');
+    document.getElementById('gameForm').style.display = 'none';
+    document.getElementById('apiResults').style.display = 'none';
+    document.getElementById('apiResults').innerHTML = '';
+    document.getElementById('apiQuery').value = '';
+    selectedApiGame = null;
+}
+
+function switchTab(tab){
+    ['api','manual','barcode'].forEach(t=>{
+        document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+        document.getElementById('pane-'+t).style.display = t===tab ? '' : 'none';
+    });
+    if(tab === 'manual'){
+        document.getElementById('gameForm').style.display = '';
+    } else if(tab !== 'api' || selectedApiGame){
+        // keep visible if api game selected
+    } else {
+        document.getElementById('gameForm').style.display = 'none';
+    }
+    if(tab !== 'barcode') stopScan();
+}
+
+function resetForm(){
+    ['fTitle','fConsole','fYear','fNotes','fCoverUrl','fPrix','fValeur'].forEach(id=>{
+        const el = document.getElementById(id);
+        if(el) el.value = '';
+    });
+    document.getElementById('fEtat').value   = '';
+    document.getElementById('fRegion').value = '';
+    currentMediaType = 'cartouche';
+    document.querySelectorAll('.media-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelector('.media-btn[data-type="cartouche"]').classList.add('active');
+    buildCompGrid({}, 'cartouche');
+    updateCoverPreview();
+}
+
+function fillForm(data){
+    document.getElementById("fTitle").value   = data.title   || "";
+    document.getElementById("fConsole").value = data.console || "";
+    document.getElementById("fYear").value    = data.year    || "";
+    document.getElementById("fEtat").value    = data.etat    || "";
+    document.getElementById("fRegion").value  = data.region  || "";
+    document.getElementById("fPrix").value    = data.prix    != null ? data.prix : "";
+    document.getElementById("fValeur").value  = data.valeur  != null ? data.valeur : "";
+    document.getElementById("fNotes").value   = data.notes   || "";
+    const ci = document.getElementById("fCoverUrl");
+    ci.value = data.cover || data.coverBox || "";
+    ci.dataset.coverBox   = data.coverBox   || "";
+    ci.dataset.coverMedia = data.coverMedia || "";
+    currentMediaType = data.mediaType || "cartouche";
+    document.querySelectorAll(".media-btn").forEach(b=>{
+        b.classList.toggle("active", b.dataset.type === currentMediaType);
+    });
+    buildCompGrid(data.composants || {}, currentMediaType);
+    updateCoverPreview();
+    document.getElementById("gameForm").style.display = "";
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function setMediaType(type){
+    currentMediaType = type;
+    // Update button styles
+    document.querySelectorAll('.media-btn').forEach(b=>{
+        b.classList.toggle('active', b.dataset.type === type);
+    });
+    // Rebuild grid keeping existing values
+    const existing = readComposants();
+    buildCompGrid(existing, type);
+}
+
+/* Construit la grille des composants */
+function buildCompGrid(composants, mediaType){
+    if(mediaType === undefined) mediaType = currentMediaType;
+    const grid = document.getElementById('compGrid');
+    const list = getComposants(mediaType);
+    grid.innerHTML = list.map(c=>{
+        const val = composants[c.id] || {};
+
+        // ── Extras : champ texte libre ──
+        if(c.text){
+            return `<div class="comp-item present" id="ci-${c.id}" style="grid-column:1/-1">
+                <div class="comp-header">
+                    <label class="comp-name" style="opacity:.9">${c.label}</label>
+                </div>
+                <input type="text" class="comp-etat enabled" id="txt-${c.id}"
+                    placeholder="Ex : carte DLC, livret artbook, figurine…"
+                    value="${esc(val.text||'')}"
+                    style="font-size:.78rem">
+            </div>`;
+        }
+
+        // ── Composant standard ──
+        const checked = val.present ? 'checked' : '';
+        const enabled = val.present ? 'enabled' : '';
+        const etatVal = val.etat || '';
+        const noteVal = val.note || '';
+        const options = ETATS_COMP.map(e=>
+            `<option value="${e}" ${etatVal===e?'selected':''}>${e}</option>`
+        ).join('');
+        const noteHtml = c.note ? `
+            <input type="text" class="comp-etat ${enabled}" id="note-${c.id}"
+                placeholder="Note…"
+                value="${esc(noteVal)}"
+                style="font-size:.75rem;margin-top:2px">` : '';
+
+        return `<div class="comp-item ${val.present?'present':''}" id="ci-${c.id}">
+            <div class="comp-header">
+                <input type="checkbox" class="comp-toggle" id="chk-${c.id}"
+                    onchange="toggleComp('${c.id}',this.checked)" ${checked}>
+                <label class="comp-name" for="chk-${c.id}">${c.label}</label>
+            </div>
+            <select class="comp-etat ${enabled}" id="etat-${c.id}">
+                <option value="">— État —</option>
+                ${options}
+            </select>
+            ${noteHtml}
+        </div>`;
+    }).join('');
+}
+
+function toggleComp(id, checked){
+    const item = document.getElementById('ci-'+id);
+    const etat = document.getElementById('etat-'+id);
+    const note = document.getElementById('note-'+id);
+    item.classList.toggle('present', checked);
+    etat && etat.classList.toggle('enabled', checked);
+    note && note.classList.toggle('enabled', checked);
+    if(!checked){
+        if(etat) etat.value = '';
+        if(note) note.value = '';
+    }
+}
+
+function readComposants(){
+    const result = {};
+    const list = getComposants(currentMediaType);
+    list.forEach(c=>{
+        if(c.text){
+            const txt = document.getElementById('txt-'+c.id);
+            result[c.id] = { text: txt ? txt.value.trim() : '' };
+        } else {
+            const chk  = document.getElementById('chk-'+c.id);
+            const etat = document.getElementById('etat-'+c.id);
+            const note = document.getElementById('note-'+c.id);
+            result[c.id] = {
+                present: chk ? chk.checked : false,
+                etat:    etat ? etat.value : '',
+                note:    note ? note.value.trim() : '',
+            };
+        }
+    });
+    return result;
+}
+
+function updateCoverPreview(){
+    const url = document.getElementById('fCoverUrl').value.trim();
+    const thumb = document.getElementById('coverThumb');
+    if(url){
+        thumb.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:4px" onerror="this.parentNode.innerHTML='🎮'">`;
+        thumb.classList.add('has-img');
+    } else {
+        thumb.innerHTML = '🎮';
+        thumb.classList.remove('has-img');
+    }
+}
+
+function saveGame(){
+    const title = document.getElementById('fTitle').value.trim();
+    if(!title){ showToast('⚠️ Titre requis !', '#ff0088'); return; }
+
+    const prixVal   = parseFloat(document.getElementById('fPrix').value);
+    const valeurVal = parseFloat(document.getElementById('fValeur').value);
+    const ci = document.getElementById('fCoverUrl');
+    const game = {
+        id:         editingId || uid(),
+        title,
+        console:    document.getElementById('fConsole').value.trim(),
+        year:       document.getElementById('fYear').value.trim(),
+        region:     document.getElementById('fRegion').value,
+        etat:       document.getElementById('fEtat').value,
+        prix:       isNaN(prixVal)   ? null : prixVal,
+        valeur:     isNaN(valeurVal) ? null : valeurVal,
+        mediaType:  currentMediaType,
+        composants: readComposants(),
+        notes:      document.getElementById('fNotes').value.trim(),
+        cover:      ci.value.trim(),
+        coverBox:   ci.dataset.coverBox   || ci.value.trim(),
+        coverMedia: ci.dataset.coverMedia || '',
+        addedAt:    editingId ? undefined : new Date().toISOString(),
+    };
+
+    if(editingId){
+        const idx = collection.findIndex(g=>g.id===editingId);
+        if(idx !== -1){
+            game.addedAt = collection[idx].addedAt;
+            collection[idx] = game;
+        }
+        showToast('✓ Jeu mis à jour');
+        closeDetail();
+    } else {
+        game.addedAt = new Date().toISOString();
+        collection.unshift(game);
+        showToast('✓ Jeu ajouté !');
+        closeAddModal();
+    }
+
+    persistCollection();
+    renderGrid();
+}
+
+/* ══════════════════════════════════
+   SCREENSCRAPER SEARCH
+══════════════════════════════════ */
+
+function ssPickMedia(medias, type){
+    if(!medias) return '';
+    const arr = Array.isArray(medias) ? medias : [medias];
+    const match = arr.find(m=> m.type === type && (!m.region || m.region === 'wor' || m.region === 'eu' || m.region === 'us'));
+    return match ? match.url : (arr.find(m=>m.type===type)?.url || '');
+}
+
+async function searchAPI(){
+    const q       = document.getElementById('apiQuery').value.trim();
+    const console_ = document.getElementById('apiConsole').value.trim();
+    if(!q) return;
+
+    if(!ssId() || !ssPwd()){
+        document.getElementById('apiResults').style.display = '';
+        document.getElementById('apiResults').innerHTML = '<div style="text-align:center;color:#ff0088;font-size:.8rem;padding:16px">⚠️ Identifiants ScreenScraper manquants — configure-les dans ⚙ Paramètres</div>';
+        return;
+    }
+
+    const btn     = document.getElementById('btnApiSearch');
+    const results = document.getElementById('apiResults');
+    const loading = document.getElementById('apiLoading');
+
+    btn.disabled = true;
+    results.style.display = 'none';
+    loading.style.display = '';
+
+    try{
+        // Trouver le systemeid si console renseignée
+        let systemeid = '';
+        if(console_){
+            const key = Object.keys(SS_SYSTEMS).find(k => k.toLowerCase() === console_.toLowerCase());
+            if(key) systemeid = SS_SYSTEMS[key];
+        }
+
+        const extra = { recherche: q };
+        if(systemeid) extra.systemeid = systemeid;
+
+        const url = `${SS_BASE}/jeuRecherche.php?${ssParams(extra)}`;
+        const r   = await fetch(url);
+        const txt = await r.text();
+        let data;
+        try{ data = JSON.parse(txt); }
+        catch{
+            // SS a renvoyé un message d'erreur en texte brut
+            const msg = txt.slice(0, 200);
+            loading.style.display = 'none';
+            results.style.display = '';
+            results.innerHTML = `<div style="text-align:center;color:#ff0088;font-size:.8rem;padding:16px">⚠️ ScreenScraper : ${esc(msg)}</div>`;
+            btn.disabled = false;
+            return;
+        }
+        if(!r.ok) throw new Error('HTTP '+r.status);
+
+        loading.style.display = 'none';
+        results.style.display = '';
+
+        const jeux = data?.response?.jeux;
+        if(!jeux || !jeux.length){
+            results.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,.4);font-size:.85rem;padding:16px">Aucun résultat — essaie un autre titre ou précise la console</div>';
+            btn.disabled = false;
+            return;
+        }
+
+        results.innerHTML = jeux.slice(0,15).map(g=>{
+            const noms   = g.noms || [];
+            const nomFr  = noms.find(n=>n.region==='fr')?.text || noms.find(n=>n.region==='wor')?.text || noms[0]?.text || '?';
+            const annee  = g.dates?.find(d=>d.region==='eu')?.text?.slice(0,4) || g.dates?.[0]?.text?.slice(0,4) || '';
+            const system = g.systeme?.text || '';
+            const medias = g.medias?.medias || [];
+            const box    = ssPickMedia(medias,'box-2D') || ssPickMedia(medias,'box-2D-side');
+            const cart   = ssPickMedia(medias,'cartouche') || ssPickMedia(medias,'support-texture-plain');
+
+            // Encode game data for onclick
+            const gameData = {
+                ssId:    g.id,
+                title:   nomFr,
+                system:  system,
+                systemId:g.systeme?.id,
+                year:    annee,
+                coverBox:  box,
+                coverMedia:cart,
+                region:  g.regions?.regions?.[0]?.shortname?.toUpperCase() || '',
+                desc:    g.synopsis?.find(s=>s.langue==='fr')?.text || g.synopsis?.[0]?.text || '',
+            };
+
+            const encoded = encodeURIComponent(JSON.stringify(gameData));
+            return `<div class="result-item" onclick="selectSSGame(this,'${encoded}')">
+                ${box
+                    ? `<img src="${box}" alt="" style="width:44px;height:58px;object-fit:cover;border-radius:4px;flex-shrink:0">`
+                    : '<div style="width:44px;height:58px;background:rgba(168,85,247,.1);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.5rem">🎮</div>'}
+                <div class="result-info">
+                    <div class="result-name">${esc(nomFr)}</div>
+                    <div class="result-sub">${annee}${system?' · '+esc(system):''}</div>
+                </div>
+            </div>`;
+        }).join('');
+
+    }catch(e){
+        loading.style.display = 'none';
+        results.style.display = '';
+        results.innerHTML = `<div style="text-align:center;color:#ff0088;font-size:.8rem;padding:16px">Erreur : ${esc(e.message)}</div>`;
+    }
+    btn.disabled = false;
+}
+
+function selectSSGame(el, encoded){
+    document.querySelectorAll('.result-item').forEach(r=>r.classList.remove('selected'));
+    el.classList.add('selected');
+
+    const data = JSON.parse(decodeURIComponent(encoded));
+
+    // Deviner la console depuis le système SS
+    let consoleGuess = data.system || '';
+
+    // Deviner mediaType depuis le système
+    let mediaGuess = 'cartouche';
+    const sys = (data.system||'').toLowerCase();
+    if(sys.includes('cd') || sys.includes('playstation') || sys.includes('saturn')
+       || sys.includes('dreamcast') || sys.includes('pc engine cd') || sys.includes('pc-fx'))
+        mediaGuess = 'cd';
+    else if(sys.includes('cassette') || sys.includes('zx') || sys.includes('amstrad'))
+        mediaGuess = 'cassette';
+    else if(sys.includes('amiga') || sys.includes('dos') || sys.includes('atari st'))
+        mediaGuess = 'disquette';
+
+    selectedApiGame = data;
+    fillForm({
+        title:      data.title,
+        coverBox:   data.coverBox,
+        coverMedia: data.coverMedia,
+        cover:      data.coverBox || data.coverMedia,
+        year:       data.year,
+        console:    consoleGuess,
+        region:     data.region,
+        mediaType:  mediaGuess,
+        notes:      data.desc ? data.desc.slice(0,300) : '',
+    });
+}
+
+/* ══════════════════════════════════
+   BARCODE SCANNER (ZXing)
+══════════════════════════════════ */
+let zxingReader = null;
+
+async function loadZXing(){
+    if(window.ZXing) return;
+    return new Promise((resolve, reject)=>{
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1/umd/index.min.js';
+        s.onload = resolve;
+        s.onerror = reject;
+        document.head.appendChild(s);
+    });
+}
+
+async function startScan(){
+    document.getElementById('btnStartScan').style.display = 'none';
+    document.getElementById('btnStopScan').style.display  = '';
+    document.getElementById('videoWrap').style.display    = '';
+    document.getElementById('scanResult').style.display   = 'none';
+
+    try{
+        await loadZXing();
+        const video = document.getElementById('scanVideo');
+        zxingReader = new ZXing.BrowserMultiFormatReader();
+        const constraints = { video: { facingMode: 'environment' } };
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        scanStream = stream;
+        video.srcObject = stream;
+        video.play();
+        zxingReader.decodeFromStream(stream, video, (result, err)=>{
+            if(result){
+                const barcode = result.getText();
+                stopScan();
+                onBarcodeDetected(barcode);
+            }
+        });
+    }catch(e){
+        showToast('❌ Caméra inaccessible', '#ff0088');
+        stopScan();
+    }
+}
+
+function stopScan(){
+    if(zxingReader){ try{ zxingReader.reset(); }catch{} zxingReader = null; }
+    if(scanStream){ scanStream.getTracks().forEach(t=>t.stop()); scanStream = null; }
+    document.getElementById('btnStartScan').style.display = '';
+    document.getElementById('btnStopScan').style.display  = 'none';
+    document.getElementById('videoWrap').style.display    = 'none';
+}
+
+async function onBarcodeDetected(barcode){
+    const res = document.getElementById('scanResult');
+    res.style.display = '';
+    res.textContent   = '🔍 Code détecté : ' + barcode + ' — recherche ScreenScraper…';
+
+    if(!ssId() || !ssPwd()){
+        res.textContent = '⚠️ Identifiants ScreenScraper manquants — configure dans Paramètres';
+        return;
+    }
+
+    try{
+        const url = `${SS_BASE}/jeuInfos.php?${ssParams({ crc:'', md5:'', sha1:'', romnom: barcode+'.zip', romtaille:'' })}`;
+        const r   = await fetch(url);
+        const txt = await r.text();
+        let data;
+        try{ data = JSON.parse(txt); } catch{ data = null; }
+        const jeu = data?.response?.jeu;
+        if(jeu){
+            const noms  = jeu.noms || [];
+            const titre = noms.find(n=>n.region==='fr')?.text || noms[0]?.text || barcode;
+            res.textContent = '✓ Trouvé : ' + titre;
+            // Pré-remplir via recherche textuelle pour avoir les médias
+            switchTab('api');
+            document.getElementById('apiQuery').value = titre;
+            searchAPI();
+        } else {
+            res.textContent = '⚠️ Non trouvé. Saisis le titre manuellement.';
+            switchTab('manual');
+        }
+    }catch(e){
+        res.textContent = '❌ Erreur lors de la recherche.';
+    }
+}
+
+/* ══════════════════════════════════
+   MODAL DÉTAIL
+══════════════════════════════════ */
+function buildCompsDetail(composants, mediaType){
+    const list = getComposants(mediaType||'');
+    const etatColor = {'Neuf':'#0f8','TB':'#0f8','Bon':'#fa0','Moyen':'#f60','Mauvais':'#ff0088'};
+
+    const lines = list.map(c=>{
+        const val = composants[c.id] || {};
+        if(c.text){
+            if(!val.text) return '';
+            return `<div style="display:flex;align-items:flex-start;justify-content:space-between;
+                        padding:5px 8px;border-radius:6px;background:rgba(168,85,247,.07);
+                        border:1px solid rgba(168,85,247,.2);gap:8px">
+                <span style="font-size:.8rem">${c.label}</span>
+                <span style="font-size:.75rem;color:rgba(168,85,247,.9);text-align:right">${esc(val.text)}</span>
+            </div>`;
+        }
+        if(!val.present){
+            return `<div style="display:flex;align-items:center;padding:5px 8px;border-radius:6px;
+                        background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.07);opacity:.4">
+                <span style="font-size:.8rem;text-decoration:line-through">${c.label}</span>
+            </div>`;
+        }
+        const col = etatColor[val.etat] || 'rgba(255,255,255,.5)';
+        const noteHtml = val.note
+            ? `<div style="font-size:.7rem;color:rgba(255,255,255,.45);margin-top:2px;font-style:italic">${esc(val.note)}</div>`
+            : '';
+        return `<div style="padding:5px 8px;border-radius:6px;background:rgba(0,255,136,.05);
+                    border:1px solid rgba(0,255,136,.15)">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+                <span style="font-size:.8rem">${c.label}</span>
+                ${val.etat ? `<span style="font-size:.7rem;font-weight:700;color:${col}">${val.etat}</span>` : ''}
+            </div>
+            ${noteHtml}
+        </div>`;
+    }).filter(Boolean).join('');
+
+    if(!lines) return '';
+    return `<div class="form-group">
+        <div class="form-label">Composants</div>
+        <div style="display:flex;flex-direction:column;gap:5px">${lines}</div>
+    </div>`;
+}
+
+function openDetail(id){
+    const g = collection.find(x=>x.id===id);
+    if(!g) return;
+
+    document.getElementById('detailModalTitle').textContent = 'DÉTAIL';
+    const etatClass = {Neuf:'b-neuf',TB:'b-tb',Bon:'b-bon',Moyen:'b-moyen',Mauvais:'b-mauvais'}[g.etat]||'';
+
+    document.getElementById('detailBody').innerHTML = `
+        <div class="detail-head">
+            ${g.cover
+                ? `<img src="${esc(g.cover)}" class="detail-cover" onerror="this.innerHTML='🎮'">`
+                : `<div class="detail-cover" style="display:flex;align-items:center;justify-content:center">🎮</div>`}
+            <div class="detail-meta">
+                <div class="detail-name">${esc(g.title)}</div>
+                ${g.console ? `<div class="detail-sub">🕹️ ${esc(g.console)}${g.region ? " · <span style=\"color:#0ff\">" + esc(g.region) + "</span>" : ""}</div>` : ""}
+                ${g.year    ? `<div class="detail-sub">📅 ${esc(g.year)}</div>`    : ""}
+                ${g.etat    ? `<span class="etat-badge ${etatClass}" style="position:static;display:inline-block;margin-top:4px">${esc(g.etat)}</span>` : ""}
+                ${(g.prix!=null||g.valeur!=null) ? `<div class="detail-sub" style="margin-top:6px;display:flex;gap:12px">${g.prix!=null?"<span>💸 Payé <b style=\"color:#fa0\">"+g.prix+"€</b></span>":""}${g.valeur!=null?"<span>💰 Valeur <b style=\"color:#0f8\">"+g.valeur+"€</b></span>":""}</div>` : ""}
+            </div>
+            </div>
+        </div>
+        ${g.notes ? `
+        <div class="form-group">
+            <div class="form-label">Notes</div>
+            <div class="detail-notes">${esc(g.notes)}</div>
+        </div>` : ''}
+        ${buildCompsDetail(g.composants||{}, g.mediaType||'')}
+        <div class="detail-sub" style="font-size:.7rem;opacity:.5">Ajouté le ${new Date(g.addedAt||Date.now()).toLocaleDateString('fr-FR')}</div>
+        <div class="modal-actions">
+            <button class="btn-delete" onclick="deleteGame('${g.id}')">🗑 Supprimer</button>
+            <div style="flex:1"></div>
+            <button class="btn-cancel" onclick="closeDetail()">Fermer</button>
+            <button class="btn-edit" onclick="editGame('${g.id}')">✏️ Modifier</button>
+        </div>
+    `;
+    document.getElementById('detailOverlay').classList.add('open');
+}
+
+function closeDetail(){
+    document.getElementById('detailOverlay').classList.remove('open');
+    editingId = null;
+    document.getElementById('gameForm').style.display = 'none';
+}
+
+function editGame(id){
+    const g = collection.find(x=>x.id===id);
+    if(!g) return;
+    editingId = id;
+    closeDetail();
+    // Ouvre le modal en mode édition
+    document.getElementById('addModalTitle').textContent = 'MODIFIER LE JEU';
+    switchTab('manual');
+    fillForm(g);
+    document.getElementById('addOverlay').classList.add('open');
+}
+
+function deleteGame(id){
+    if(!confirm('Supprimer ce jeu de ta collection ?')) return;
+    collection = collection.filter(g=>g.id!==id);
+    persistCollection();
+    renderGrid();
+    closeDetail();
+    showToast('🗑 Jeu supprimé', '#ff0088');
+}
+
+/* ══════════════════════════════════
+   INIT
+══════════════════════════════════ */
+window.addEventListener('load', ()=>{
+    loadCollection();
+    updateStats();
+    populateConsoleFilter();
+    renderGrid();
+    initSync();
+
+    // Fermer overlay en cliquant dehors
+    document.getElementById('addOverlay').addEventListener('click', e=>{
+        if(e.target === document.getElementById('addOverlay')) closeAddModal();
+    });
+    document.getElementById('detailOverlay').addEventListener('click', e=>{
+        if(e.target === document.getElementById('detailOverlay')) closeDetail();
+    });
+});
+</script>
+</body>
+</html>
